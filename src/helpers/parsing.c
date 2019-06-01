@@ -43,7 +43,7 @@ errorCode strtok_num(char *args_str, double *nump)
 {
     char *end_str;          /* The pointer to the string after the parsed number */
     char *token;            /* Cleaned token from strtok_wrapper */
-    errorCode res;    /* The result of the function */
+    errorCode res;          /* The result of the function */
 
     TRY_THROW(res, strtok_wrapper(args_str, &token));
 
@@ -65,9 +65,7 @@ void clean_token(char **tokenp)
     /* Check if every character in the token was white space, if not, clean trailing white spaces */
     if(IS_EMPTY_STR(*tokenp) == FALSE)
     {
-        for(i = strlen(*tokenp) - 1; i >= 0 && IS_WHITESPACE((*tokenp)[i]); i--)
-        {
-        }
+        for(i = strlen(*tokenp) - 1; i >= 0 && IS_WHITESPACE((*tokenp)[i]); i--);
         (*tokenp)[i + 1] = '\0';
     }
 }
