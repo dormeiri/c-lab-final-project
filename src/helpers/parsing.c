@@ -50,7 +50,7 @@ errorCode strtok_num(char *args_str, double *nump)
     *nump = strtod(token,&end_str);
 
     /* If there is any character after the read number, that mean that the token didn't containd just a number */
-    return IS_EMPTY_STR(end_str) ? OK : NOT_REAL;
+    return IS_EMPTY_STR(end_str) ? OK : NOT_INT;
 }
 
 /* Advence the pointer to the token by one for each white space found,
