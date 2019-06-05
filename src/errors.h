@@ -18,14 +18,14 @@ Parameters:
 /* The error code of a function, negative value is not an error */
 typedef enum errorCode
 {
+    /* EOF found */
+    EOF_OCCURED = -2,
+
     /* Function ran with no exceptions */
     OK = -1,   
 
-    /* Expected real number, but parsed something else */
-    NOT_REAL = 0,    
-
-    /* Expected valid mat name but couldn't found that parsed name */
-    UNDIFINED_MAT = 1,    
+    /* Expected integer number, but parsed something else */
+    NOT_INT = 0,       
 
     /* Couldn't find the command */
     UNDIFINED_COMMAND = 2,    
@@ -45,12 +45,6 @@ typedef enum errorCode
     /* Two or more consecutive commas has been found on parsing */
     CONSECUTIVE_COMMA = 7,    
 
-    /* Expected real number as a scalar, but parsed something else */
-    NOT_SCALAR = 8,    
-
-    /* Encountered EOF */
-    EOF_ERROR = 9,    
-
     /* Comma found and expecting another argument, but the value is empty */
     EMPTY_VAL = 10,   
 
@@ -64,6 +58,20 @@ typedef enum errorCode
     TOK_LEN_EXCEEDED = 13
 } errorCode;
 
-void print_error(errorCode error);
+typedef struct error
+{
+    errorCode   code;       /* Error code of the error */
+    int         line_num;   /* Line number where the error occured */
+    char        *filename;  /* The name of file where the error occured */
+    char        *token_str; /* The token string which caused the error */
+    char        *line_str;  /* The line string which caused the error */
+} error;
+
+/*  
+Description:    Print to stderr error message according to the information found in error_obj
+Parameters:
+    - error_obj:    The struct error object that contains error information to pring
+*/
+void print_error(error error_obj);
 
 #endif
