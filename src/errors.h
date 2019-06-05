@@ -27,8 +27,11 @@ typedef enum errorCode
     /* Expected integer number, but parsed something else */
     NOT_INT = 0,       
 
+    /* Assign of reserved word */
+    RESERVED_WORD = 1,
+
     /* Couldn't find the command */
-    UNDIFINED_COMMAND = 2,    
+    UNDEFINED_COMMAND = 2,    
 
     /* Extraneous text after end of command */
     AFTER_TEXT = 3,    
@@ -43,7 +46,13 @@ typedef enum errorCode
     MISSING_COMMA = 6,    
 
     /* Two or more consecutive commas has been found on parsing */
-    CONSECUTIVE_COMMA = 7,    
+    CONSECUTIVE_COMMA = 7,   
+
+    /* Invalid character */
+    INVALID_CHAR = 8,
+    
+    /* Expected symbol, but did not found the symbol */
+    UNDEFINED_SYMBOL = 9,
 
     /* Comma found and expecting another argument, but the value is empty */
     EMPTY_VAL = 10,   
