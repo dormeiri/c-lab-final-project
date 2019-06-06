@@ -4,37 +4,49 @@
 #include "validations.h"
 #include "parsing.h"
 
+#define TAG_END ':'
 errorCode strtok_wrapper(char *args_str, char **tokenp);
 
 /* Ignore leading white spaces, replace the last character if it is a newline
 then search the first white space occures and split there to command name and args_strp */
-void split_command_line(char *command_line, char **command_strp, char **args_strp)
-{
-    char *last_char;    /* Pointer to the last character in command line */
-
-    last_char = command_line + strlen(command_line) - 1;
-    if(((*(last_char) == '\n')) == FALSE)
-    {
-        last_char++;
-    }
-
-    *command_strp = command_line; /* Command name */
+void split_statement(char *command_line, char **tag, char **statement_key, char **args_strp)
+{   
+    errorCode res;
+    int i;
 
     IGNORE_WHITE_SPACES(command_line);
+    *tag = command_line;
 
-    /* Search the first occurence of any white space */
-    if((*args_strp = strpbrk(command_line, WHITE_SPACE_STR)) == NULL)
+    for(; (IS_WHITESPACE(*command_line) || *command_line == TAG_END) == FALSE; command_line++);
+    if(*command_line == TAG_END)
     {
-        *args_strp = last_char++;
+        /* Tag found */
+        *command_line = '\0'; /* Split */
+        
+        /* TODO: Validate tag */
+        /* TRY_THROW(res, tag_validation(*tag)); */
+
+        command_line++;
+
+        IGNORE_WHITE_SPACES(command_line);
+        *statement_key = command_line;
+
+        for(; IS_WHITESPACE(*command_line) == FALSE; command_line++);
+        *command_line = '\0'; /* Split */
     }
+    else
+    {
+        /* Tag not found */
+        *command_line = '\0'; /* Split */
 
-    /* Now we can put white space and two \0 for later validations effiecency using strtok */
-    *last_char = WHITE_SPACE_1;
-    *(last_char + 1) = '\0';
-    *(last_char + 2) = '\0';
+        *statement_key = *tag;
+        *tag = NULL;
+    }
+    
+    command_line++;
+    args_strp = *command_line;
 
-    /* Split */
-    *((*args_strp)++) = '\0'; 
+    return OK;
 }
 
 /* Use strtok_wrapper to get a clean token, then use strtod to parse the token into number,
@@ -47,7 +59,7 @@ errorCode strtok_num(char *args_str, double *nump)
 
     TRY_THROW(res, strtok_wrapper(args_str, &token));
 
-    *nump = strtod(token,&end_str);
+    *nump = strtoi(token,&end_str);
 
     /* If there is any character after the read number, that mean that the token didn't containd just a number */
     return IS_EMPTY_STR(end_str) ? OK : NOT_INT;
