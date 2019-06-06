@@ -1,9 +1,8 @@
 CC = gcc
 CFLAGS = -pedantic -Wall -ansi
-DEPS = src/common.h src/commons.h src/common.h src/errors.h src/helpers/parsing.h src/helpers/validations.h tests/unit_tests/unit_test.h
-OBJ = src/errors.o src/helpers/parsing.o src/helpers/validations.o
+DEPS = src/common.h src/commons.h src/common.h src/errors.h src/helpers/parsing.h src/helpers/validations.h src/helpers/queue.h tests/unit_tests/unit_test.h
+OBJ = src/errors.o src/helpers/parsing.o src/helpers/validations.o src/helpers/queue.o
 UTOBJ = tests/unit_tests/unit_test.o
-TESTSOBJ = tests/unit_tests/parsing_test.o tests/unit_tests/validations_test.o tests/unit_tests/errors_test.o
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -16,7 +15,7 @@ assembly: $(OBJ)
 # Utilities commands
 
 clean:
-	rm $(OBJ) $(UTOBJ) $(TESTSOBJ)
+	rm $(OBJ) $(UTOBJ)
 
 run: assembly
 	./assembly
@@ -41,7 +40,14 @@ tests/unit_tests/errors_test: $(OBJ) $(UTOBJ) tests/unit_tests/errors_test.o
 errors_test: tests/unit_tests/errors_test
 	./$^
 
+tests/unit_tests/queue_test: $(OBJ) $(UTOBJ) tests/unit_tests/queue_test.o
+	$(CC) $(CFLAGS) -g $^ -o $@
+
+queue_test: tests/unit_tests/queue_test
+	./$^
+
 test_all:
 	make parsing_test
 	make validations_test
 	make errors_test
+	make queue_test

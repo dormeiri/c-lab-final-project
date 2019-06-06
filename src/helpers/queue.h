@@ -14,7 +14,7 @@ typedef struct queue
 {
     queue_node *head;
     queue_node *tail;
-    size_t node_size;
+    size_t data_size;
 } queue;
 
 #define IS_EMPTY_QUEUE(QREF) (QREF->head == NULL)
@@ -32,9 +32,10 @@ queue *initilize_queue(size_t node_size);
 Description:    Enqueue new node into queue
 Parameters:
     queue:      The head of the queue
+    value_ref:  Reference to a generic value
 Exceptions:     Exit if couldn't allocate memory for the queue
 */
-void enqueue(queue *queue, void *value);
+void enqueue(queue *queue, void *value_ref);
 
 /*
 Description:    Dequeue tail from queue

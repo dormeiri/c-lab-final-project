@@ -1,16 +1,18 @@
+#include <string.h>
 #include <stdio.h>
 #include "queue.h"
 
-queue *initilize_queue(size_t node_size)
+queue *initilize_queue(size_t data_size)
 {
     queue *new_queue = (queue *)malloc(sizeof(queue));
     new_queue->head = NULL;
     new_queue->tail = NULL;
+    new_queue->data_size = data_size;
 
     return new_queue;
 }
 
-void enqueue(queue *queue, void *value)
+void enqueue(queue *queue, void *value_ref)
 {
     /* Allocate memory for new node */
     queue_node *new_node = (queue_node *)malloc(sizeof(queue_node));
@@ -20,11 +22,13 @@ void enqueue(queue *queue, void *value)
     }
 
     /* Allocate memory for the new node's data (generic type) */
-    new_node->data = malloc(queue->node_size);
+    new_node->data = malloc(queue->data_size);
     if(new_node->data == NULL)
     {
         exit(EXIT_FAILURE); /* TODO: should we free before? */
     }
+
+    new_node->data = value_ref;
 
     /* Add the new node to the queue */
     if(IS_EMPTY_QUEUE(queue))
@@ -42,7 +46,15 @@ void enqueue(queue *queue, void *value)
 void *dequeue(queue *queue)
 {
     queue_node *removed_node = queue->head;
-    void *value = queue->head->data;
+    void *value_ref = malloc(queue->data_size);
+
+    if(value_ref == NULL)
+    {
+        exit(EXIT_FAILURE); /* TODO: should we free before? */
+    }
+
+    /* Copy the data from the node to local variable because we are going to free the node */
+    memcpy(value_ref, queue->head->data, queue->data_size);
 
     if(queue->head->next)
     {
@@ -54,8 +66,7 @@ void *dequeue(queue *queue)
         queue->tail = NULL;
     }
 
-    /* TODO: Will cause error because value is part of removed_node, need to think how we free it without harming variable value */
-    /* free(removed_node); */
+    free(removed_node);
 
-    return value;
+    return value_ref;
 }
