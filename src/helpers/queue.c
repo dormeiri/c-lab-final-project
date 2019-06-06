@@ -1,5 +1,4 @@
 #include <string.h>
-#include <stdio.h>
 #include "queue.h"
 
 queue *initilize_queue(size_t data_size)

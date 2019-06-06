@@ -23,11 +23,11 @@ typedef enum boolean
 #define WHITE_SPACE_1 WHITE_SPACE_STR[0]
 #define WHITE_SPACE_2 WHITE_SPACE_STR[1]
 
+/* The max size of a buffer */
+#define LINE_BUFFER_LEN 81
+
 /* The max length of a string, the next 4 characters after the end of the line buffer are used for validations */
 #define MAX_STRING_LEN (LINE_BUFFER_LEN + 4)
-
-/* The max size of a buffer */
-#define LINE_BUFFER_LEN 80
 
 /* The max size of a token after cleaning whitespaces */
 #define MAX_TOKEN_LEN 14

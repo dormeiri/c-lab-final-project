@@ -57,8 +57,8 @@ void assert(char *name, void *actual, void *expected, typeCode type)
             break;
         case STRING:    
             result = ((strcmp(*(char **)actual, *(char **)expected) == 0) ? SUCCESS : FAIL);
-            strncpy(actual_str, *(char **)actual, 50);
-            strncpy(expected_str, *(char **)expected, 50);
+            strncpy(actual_str, *(char **)actual, BUFFER_SIZE);
+            strncpy(expected_str, *(char **)expected, BUFFER_SIZE);
             break;
 
         default:

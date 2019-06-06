@@ -64,7 +64,10 @@ typedef enum errorCode
     BUF_LEN_EXCEEDED = 12,
 
     /* Exceeded cleaned token length */
-    TOK_LEN_EXCEEDED = 13
+    TOK_LEN_EXCEEDED = 13,
+
+    /* Error occured while reading/writing to a file */
+    FILE_ERROR = 14
 } errorCode;
 
 typedef struct error
