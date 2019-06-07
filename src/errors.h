@@ -48,8 +48,8 @@ typedef enum errorCode
     /* Two or more consecutive commas has been found on parsing */
     CONSECUTIVE_COMMA = 7,   
 
-    /* Invalid character */
-    INVALID_CHAR = 8,
+    /* Invalid tag */
+    INVALID_TAG = 8,
     
     /* Expected symbol, but did not found the symbol */
     UNDEFINED_SYMBOL = 9,

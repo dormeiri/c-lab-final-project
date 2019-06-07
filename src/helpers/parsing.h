@@ -18,14 +18,16 @@ CHAR:   The char to look at after each iteration
 #define IGNORE_WHITE_SPACES(STR) for(;IS_WHITESPACE(*STR); (STR)++)
 
 /* 
-Description:    Split command line to command name and arguments string,
-                This method will also change command_line
+Description:            Split command line to command name and arguments string,
+                        This method will also change command_line
 Parameters:
-    - command_line: String of the full command line.
-    - command_strp: A pointer to the string of the command name part in the command line.
-    - args_strp:    A pointer to the string of the arguments part in the command line.
+    - command_line:     String of the full command line.
+    - tag:              A pointer to the string of the command name part in the command line.
+    - statement_key:    A pointer to the string of the command name part in the command line.
+    - args_strp:        A pointer to the string of the arguments part in the command line.
+Return:                 OK if ran as expected, otherwise, error code
 */
-void split_command_line(char *command_line, char **command_strp, char **args_strp);
+errorCode split_statement(char *statement_line, char **tag_ref, char **statement_key_ref, char **args_ref);
 
 /* 
 Description:    Parse the next token with strtok, and then parse the token to a real number and store it in nump

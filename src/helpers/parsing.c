@@ -9,42 +9,41 @@ errorCode strtok_wrapper(char *args_str, char **tokenp);
 
 /* Ignore leading white spaces, replace the last character if it is a newline
 then search the first white space occures and split there to command name and args_strp */
-void split_statement(char *command_line, char **tag, char **statement_key, char **args_strp)
+errorCode split_statement(char *statement_line, char **tag_ref, char **statement_key_ref, char **args_ref)
 {   
     errorCode res;
-    int i;
 
-    IGNORE_WHITE_SPACES(command_line);
-    *tag = command_line;
+    IGNORE_WHITE_SPACES(statement_line);
+    *tag_ref = statement_line;
 
-    for(; (IS_WHITESPACE(*command_line) || *command_line == TAG_END) == FALSE; command_line++);
-    if(*command_line == TAG_END)
+    for(; (IS_WHITESPACE(*statement_line) || *statement_line == TAG_END) == FALSE; statement_line++);
+    if(*statement_line == TAG_END)
     {
         /* Tag found */
-        *command_line = '\0'; /* Split */
+        *statement_line = '\0'; /* Split */
         
         /* TODO: Validate tag */
         /* TRY_THROW(res, tag_validation(*tag)); */
 
-        command_line++;
+        statement_line++;
 
-        IGNORE_WHITE_SPACES(command_line);
-        *statement_key = command_line;
+        IGNORE_WHITE_SPACES(statement_line);
+        *statement_key_ref = statement_line;
 
-        for(; IS_WHITESPACE(*command_line) == FALSE; command_line++);
-        *command_line = '\0'; /* Split */
+        for(; IS_WHITESPACE(*statement_line) == FALSE; statement_line++);
+        *statement_line = '\0'; /* Split */
     }
     else
     {
         /* Tag not found */
-        *command_line = '\0'; /* Split */
+        *statement_line = '\0'; /* Split */
 
-        *statement_key = *tag;
-        *tag = NULL;
+        *statement_key_ref = *tag_ref;
+        *tag_ref = NULL;
     }
     
-    command_line++;
-    args_strp = *command_line;
+    statement_line++;
+    *args_ref = statement_line;
 
     return OK;
 }
@@ -59,7 +58,7 @@ errorCode strtok_num(char *args_str, double *nump)
 
     TRY_THROW(res, strtok_wrapper(args_str, &token));
 
-    *nump = strtoi(token,&end_str);
+    *nump = strtol(token, &end_str, 10);
 
     /* If there is any character after the read number, that mean that the token didn't containd just a number */
     return IS_EMPTY_STR(end_str) ? OK : NOT_INT;
