@@ -3,6 +3,7 @@
 
 #include "../commons.h"
 #include "../errors.h"
+#include "../assembly.h"
 
 /* Check wheter a character is white space character */
 #define IS_WHITESPACE(CHAR) (CHAR == WHITE_SPACE_1 || CHAR == WHITE_SPACE_2)
@@ -17,17 +18,23 @@ CHAR:   The char to look at after each iteration
 */
 #define IGNORE_WHITE_SPACES(STR) for(;IS_WHITESPACE(*STR); (STR)++)
 
+typedef struct translator
+{
+    char *str;
+    int type;
+    
+} translator;
+
+
 /* 
 Description:            Split command line to command name and arguments string,
                         This method will also change command_line
 Parameters:
     - command_line:     String of the full command line.
-    - tag:              A pointer to the string of the command name part in the command line.
-    - statement_key:    A pointer to the string of the command name part in the command line.
-    - args_strp:        A pointer to the string of the arguments part in the command line.
+    - statement_ref:    Reference to statement structs, this is the output
 Return:                 OK if ran as expected, otherwise, error code
 */
-errorCode split_statement(char *statement_line, char **tag_ref, char **statement_key_ref, char **args_ref);
+errorCode map_statement(char *statement_line, statement *statement_ref);
 
 /* 
 Description:    Parse the next token with strtok, and then parse the token to a real number and store it in nump

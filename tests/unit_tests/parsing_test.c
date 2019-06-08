@@ -6,25 +6,53 @@
 void is_whitespace_test();
 void ignore_whitespaces_test();
 void clean_token_test();
-void split_statement_test(char *line, char *tag_expected, char *statement_key_expected, char *args_expected);
-void split_statement_error_test(char *line, errorCode code_expected);
+void map_statement_test(char *line, statement *expected);
+void map_statement_error_test(char *line, errorCode code_expected);
 
 int main()
 {
+    statement *expected = (statement *)malloc(sizeof(statement));
+
     is_whitespace_test();    
     ignore_whitespaces_test();
     clean_token_test();
 
-    split_statement_test("TAG:mov a,b,c", "TAG", "mov", "a,b,c");
-    split_statement_test("  \t TAG: \t mov \t  a,b,c   \t ", "TAG", "mov", "\t  a,b,c   \t ");
-    split_statement_test("  \t mov \t  a,b,c   \t ", NULL, "mov", "\t  a,b,c   \t ");
+    expected->tag = "TAG";
+    expected->statement_type = OPERATION;
+    expected->operation_type = MOV;
+    expected->args = "a,b,c";
+    map_statement_test("TAG:mov a,b,c", expected);
 
-    split_statement_error_test("  \t mov \t  a,b,c   \t ", OK);
-    split_statement_error_test("  \t MOV: \t mov \t  a,b,c   \t ", OK);
-    split_statement_error_test("  \t mov: \t mov \t  a,b,c   \t ", RESERVED_WORD);
-    split_statement_error_test("  \t mo#v: \t mov \t  a,b,c   \t ", INVALID_TAG);
-    split_statement_error_test("  \t 1ov: \t mov \t  a,b,c   \t ", INVALID_TAG);
-    split_statement_error_test("  \t .1ov: \t mov \t  a,b,c   \t ", INVALID_TAG);
+    expected->tag = "TAG";
+    expected->statement_type = DATA_KEY;
+    expected->operation_type = NONE;
+    expected->args = "a,b,c   \t ";
+    map_statement_test("  \t TAG: \t .data \t  a,b,c   \t ", expected);
+
+    expected->tag = NULL;
+    expected->statement_type = STRING_KEY;
+    expected->operation_type = NONE;
+    expected->args = "a,b,c   \t ";
+    map_statement_test("  \t .string \t  a,b,c   \t ", expected);
+
+    expected->tag = NULL;
+    expected->statement_type = OPERATION;
+    expected->operation_type = JMP;
+    expected->args = NULL;
+    map_statement_test("jmp", expected);
+
+    expected->tag = NULL;
+    expected->statement_type = OPERATION;
+    expected->operation_type = JMP;
+    expected->args = NULL;
+    map_statement_test(" \t   jmp       \t", expected);
+
+    map_statement_error_test("  \t mov \t  a,b,c   \t ", OK);
+    map_statement_error_test("  \t MOV: \t mov \t  a,b,c   \t ", OK);
+    map_statement_error_test("  \t mov: \t mov \t  a,b,c   \t ", RESERVED_WORD);
+    map_statement_error_test("  \t mo#v: \t mov \t  a,b,c   \t ", INVALID_TAG);
+    map_statement_error_test("  \t 1ov: \t mov \t  a,b,c   \t ", INVALID_TAG);
+    map_statement_error_test("  \t .1ov: \t mov \t  a,b,c   \t ", INVALID_TAG);
 
     return 0;
 }
@@ -99,44 +127,51 @@ void clean_token_test()
     assert(name, &actual, &expected, STRING);
 }
 
-void split_statement_test(char *line, char *tag_expected, char *statement_key_expected, char *args_expected)
+void map_statement_test(char *line, statement *expected)
 {
-    static char *name = "split_statement";
+    static char *name = "map_statement";
 
     char *line_copy = (char *)malloc(strlen(line) * sizeof(char)); /* In case we got constant string */
-    char *tag_actual;
-    char *statement_key_actual;
-    char *args_actual;
+    
+    statement *actual = (statement *)malloc(sizeof(statement));
 
     strcpy(line_copy, line);
 
-    split_statement(line_copy, &tag_actual, &statement_key_actual, &args_actual);
+    map_statement(line_copy, actual);
 
-    if(tag_expected)
+    if(expected->tag)
     {
-        assert(name, &tag_actual, &tag_expected, STRING);
+        assert(name, &(actual->tag), &(expected->tag), STRING);
     }
     else
     {
-        assert(name, &tag_actual, &tag_expected, INT);
+        assert(name, &(actual->tag), &(expected->tag), INT);
     }
-    assert(name, &statement_key_actual, &statement_key_expected, STRING);
-    assert(name, &args_actual, &args_expected, STRING);
+    assert(name, &(actual->statement_type), &(expected->statement_type), INT);
+    assert(name, &(actual->operation_type), &(expected->operation_type), INT);
+
+    if(expected->args)
+    {
+        assert(name, &(actual->args), &(expected->args), STRING);
+    }
+    else
+    {
+        assert(name, &(actual->args), &(expected->args), INT);
+    }
+    
 }
 
-void split_statement_error_test(char *line, errorCode code_expected)
+void map_statement_error_test(char *line, errorCode code_expected)
 {
 
-    static char *name = "split_statement";
+    static char *name = "map_statement";
 
     char *line_copy = (char *)malloc(strlen(line) * sizeof(char)); /* In case we got constant string */
-    char *tag_actual;
-    char *statement_key_actual;
-    char *args_actual;
+    statement *temp;
     errorCode code_actual;
 
     strcpy(line_copy, line);
-    code_actual = split_statement(line_copy, &tag_actual, &statement_key_actual, &args_actual);
+    code_actual = map_statement(line_copy, temp);
 
     assert(name, &code_actual, &code_expected, INT);
 }

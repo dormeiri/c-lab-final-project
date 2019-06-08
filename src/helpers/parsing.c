@@ -5,46 +5,51 @@
 #include "parsing.h"
 
 #define TAG_END ':'
-errorCode strtok_wrapper(char *args_str, char **tokenp);
 
-/* Ignore leading white spaces, replace the last character if it is a newline
-then search the first white space occures and split there to command name and args_strp */
-errorCode split_statement(char *statement_line, char **tag_ref, char **statement_key_ref, char **args_ref)
+/* Split string in its current pointer position */
+#define SPLIT_STR(STR) *(STR++) = '\0'
+
+/* Read statment first word into DEST */
+#define READ_FIRST_WORD(STR, DEST) \
+    IGNORE_WHITE_SPACES(STR);\
+    DEST = STR;\
+    for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR) || *STR == TAG_END) == FALSE; STR++)
+
+/* Read statement second word into DEST */
+#define READ_SECOND_WORD(STR, DEST) \
+    IGNORE_WHITE_SPACES(STR);\
+    DEST = STR;\
+    for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
+
+errorCode strtok_wrapper(char *args_str, char **tokenp);
+errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
+errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
+
+errorCode map_statement(char *statement_line, statement *statement_ref)
 {   
     errorCode res;
+    char *statement_key;
 
-    IGNORE_WHITE_SPACES(statement_line);
-    *tag_ref = statement_line;
-
-    for(; (IS_WHITESPACE(*statement_line) || *statement_line == TAG_END) == FALSE; statement_line++);
+    READ_FIRST_WORD(statement_line, statement_ref->tag);
     if(*statement_line == TAG_END)
     {
-        /* Tag found */
-        *statement_line = '\0'; /* Split */
-        
-        /* TODO: Validate tag */
-        /* TRY_THROW(res, tag_validation(*tag)); */
-
-        statement_line++;
-
-        IGNORE_WHITE_SPACES(statement_line);
-        *statement_key_ref = statement_line;
-
-        for(; IS_WHITESPACE(*statement_line) == FALSE; statement_line++);
-        *statement_line = '\0'; /* Split */
+        SPLIT_STR(statement_line);
+        READ_SECOND_WORD(statement_line, statement_key);
     }
     else
     {
-        /* Tag not found */
-        *statement_line = '\0'; /* Split */
-
-        *statement_key_ref = *tag_ref;
-        *tag_ref = NULL;
+        statement_key = statement_ref->tag;
+        statement_ref->tag = NULL;
     }
     
-    statement_line++;
-    *args_ref = statement_line;
+    if(IS_EMPTY_STR(statement_line) == FALSE)
+    {
+        SPLIT_STR(statement_line);
+        IGNORE_WHITE_SPACES(statement_line);
+    }
+    statement_ref->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
 
+    TRY_THROW(res, map_statement_key(statement_key, statement_ref));
     return OK;
 }
 
@@ -112,6 +117,59 @@ errorCode strtok_wrapper(char * args_str, char **tokenp)
     }
 
     TRY_THROW(res, check_cleaned_token(*tokenp));
+
+    return OK;
+}
+
+errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
+{
+    static translator translator_arr[] = 
+    {
+        {".data", DATA_KEY},
+        {".string", STRING_KEY},
+        {".define", MACRO},
+        {NULL, 0}
+    };
+    errorCode res;
+    unsigned char i;
+
+    if(statement_key_str[0] == '.')
+    {
+        for(i = 0; strcmp(translator_arr[i].str, statement_key_str); i++);
+        if(translator_arr[i].str == NULL)
+        {
+            return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
+        }
+        statement_ref->statement_type = translator_arr[i].type;
+        statement_ref->operation_type = NONE;
+    }
+    else
+    {
+        statement_ref->statement_type = OPERATION;
+        TRY_THROW(res, map_operation_type(statement_key_str, statement_ref));
+    }
+
+    return OK;
+}
+
+errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
+{
+    static translator translator_arr[] = 
+    {
+        {"mov", MOV},
+        {"jmp", JMP},
+        {"add", ADD},
+        {"sub", SUB},
+        {NULL, 0}
+    };
+    unsigned char i;
+
+    for(i = 0; strcmp(translator_arr[i].str, statement_key_str); i++);
+    if(translator_arr[i].str == NULL)
+    {
+        return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
+    }
+    statement_ref->operation_type = translator_arr[i].type;
 
     return OK;
 }
