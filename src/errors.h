@@ -67,7 +67,10 @@ typedef enum errorCode
     TOK_LEN_EXCEEDED = 13,
 
     /* Error occured while reading/writing to a file */
-    FILE_ERROR = 14
+    FILE_ERROR = 14,
+
+    /* Invalid command line arguments */
+    INVALID_CL = 15
 } errorCode;
 
 typedef struct error
@@ -80,10 +83,10 @@ typedef struct error
 } error;
 
 /*  
-Description:    Print to stderr error message according to the information found in error_obj
-Parameters:
-    - error_obj:    The struct error object that contains error information to pring
+Description:    Print to stderr error message according to the information found in error_ref, freeing the error
 */
-void print_error(error error_obj);
+void flush_error(error *error_ref);
+
+error *create_error(errorCode code, int line_num, char *filename, char *token_str, char *line_str);
 
 #endif

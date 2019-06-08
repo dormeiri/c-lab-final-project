@@ -25,7 +25,6 @@ typedef struct translator
     
 } translator;
 
-
 /* 
 Description:            Split command line to command name and arguments string,
                         This method will also change command_line
@@ -36,21 +35,16 @@ Return:                 OK if ran as expected, otherwise, error code
 */
 errorCode map_statement(char *statement_line, statement *statement_ref);
 
-/* 
-Description:    Parse the next token with strtok, and then parse the token to a real number and store it in nump
-Parameters:
-    - args_str:     For the first token, put the string of the arguments part in the command line,
-                    after the first token, put NULL and the function will read the next token.
-    - indexp:       A pointer to a real number
-Return:         OK if ran as expected, otherwise, error code
-*/
-errorCode strtok_num(char *args_str, double *nump);
-
 /*
 Description:    Cleans a token from trailing and leading white spaces
 Parameters:
     - tokenp:    A pointer to the string you want to clean
 */
 void clean_token(char **tokenp);
+
+/*
+Description:    Parse command line arguments and get the input filename and output filename
+ */
+errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename);
 
 #endif

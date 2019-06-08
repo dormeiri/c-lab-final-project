@@ -3,7 +3,7 @@
 #include "../commons.h"
 
 /* Check if there is DELIM_CHAR in command_str, 
-then check if the first character in args_str is DELIM_CHAR(ignoring white spaces) */
+then check if the first character in args_str is DELIM_CHAR */
 errorCode preaction_validations(char *command_str, char *args_str)
 {
     for(; *command_str != '\0'; command_str++)
@@ -14,7 +14,6 @@ errorCode preaction_validations(char *command_str, char *args_str)
         }
     }
 
-    IGNORE_WHITE_SPACES(args_str);
     if(*args_str == DELIM_CHAR)
     {
         return ILLEGAL_COMMA;

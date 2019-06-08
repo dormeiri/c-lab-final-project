@@ -1,3 +1,6 @@
+#ifndef ASSEMBLY_HEADER
+#define ASSEMBLY_HEADER
+
 typedef enum statementType
 {
     EMPTY,
@@ -25,3 +28,5 @@ typedef struct statement
     operationType operation_type;
     char *args;
 } statement;
+
+#endif

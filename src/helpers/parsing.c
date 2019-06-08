@@ -53,22 +53,6 @@ errorCode map_statement(char *statement_line, statement *statement_ref)
     return OK;
 }
 
-/* Use strtok_wrapper to get a clean token, then use strtod to parse the token into number,
-that number will be stored in nump, if the token wasn't valid return error code */
-errorCode strtok_num(char *args_str, double *nump)
-{
-    char *end_str;          /* The pointer to the string after the parsed number */
-    char *token;            /* Cleaned token from strtok_wrapper */
-    errorCode res;          /* The result of the function */
-
-    TRY_THROW(res, strtok_wrapper(args_str, &token));
-
-    *nump = strtol(token, &end_str, 10);
-
-    /* If there is any character after the read number, that mean that the token didn't containd just a number */
-    return IS_EMPTY_STR(end_str) ? OK : NOT_INT;
-}
-
 /* Advence the pointer to the token by one for each white space found,
 and put '\0' in the last white space found from the end */
 void clean_token(char **tokenp)
@@ -171,5 +155,18 @@ errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
     }
     statement_ref->operation_type = translator_arr[i].type;
 
+    return OK;
+}
+
+errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename)
+{
+    if(argc != 3)
+    {
+        return INVALID_CL;
+    }
+
+    *input_filename = *(argv + 1);
+    *output_filename= *(argv + 2);
+    
     return OK;
 }
