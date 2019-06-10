@@ -1,17 +1,26 @@
 #ifndef ASSEMBLY_HEADER
 #define ASSEMBLY_HEADER
 
-typedef enum statementType
+typedef int word; /* TODO: bitfield */
+
+#define NUM_OF_REGISTERS 8
+
+/* 2^14 */
+#define MAX_NUM 16384
+
+typedef enum
 {
     EMPTY,
     COMMENT,
     MACRO,
     STRING_KEY,
     DATA_KEY,
-    OPERATION
+    OPERATION,
+    ENTRY,
+    EXTERN
 } statementType;
 
-typedef enum operationType
+typedef enum
 {
     NONE,
     MOV,
@@ -21,7 +30,22 @@ typedef enum operationType
     /* TODO: Complete */
 } operationType;
 
-typedef struct statement
+typedef enum
+{
+    INSTANT,
+    DIRECT,
+    INDEX,
+    REGISTER,
+    DATA
+} addressingType;
+
+typedef struct
+{
+    addressingType type;
+    word value;
+} address;
+
+typedef struct
 {
     char *tag;
     statementType statement_type;

@@ -64,3 +64,9 @@ errorCode check_empty_args(char *args_str)
     IGNORE_WHITE_SPACES(args_str);
     return IS_EMPTY_STR(args_str);
 }
+
+errorCode is_valid_tag(char *token)
+{
+    /* TODO: Implement */
+    return OK;
+}

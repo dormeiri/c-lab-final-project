@@ -1,10 +1,20 @@
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "validations.h"
 #include "parsing.h"
 
+/* TODO: Move to validations? */
+#define INSTANT_CHAR '#'
+#define INDEX_START '['
+#define INDEX_END ']'
 #define TAG_END ':'
+#define REGISTER_CHAR 'r'
+#define REGISTER_INDEX(STR) (STR[1] - '\0')
+#define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0] || STR[0] == '-' || STR[0] == '+'))
+#define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
+#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS)
 
 /* Split string in its current pointer position */
 #define SPLIT_STR(STR) *(STR++) = '\0'
@@ -21,9 +31,24 @@
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
+errorCode tok_to_num(char *token, word *num_ref);
+errorCode tok_index_to_num(char *token, word *num_ref);
 errorCode strtok_wrapper(char *args_str, char **tokenp);
 errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
 errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
+
+errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename)
+{
+    if(argc != 3)
+    {
+        return INVALID_CL;
+    }
+
+    *input_filename = *(argv + 1);
+    *output_filename= *(argv + 2);
+    
+    return OK;
+}
 
 errorCode map_statement(char *statement_line, statement *statement_ref)
 {   
@@ -55,63 +80,68 @@ errorCode map_statement(char *statement_line, statement *statement_ref)
 
 /* Advence the pointer to the token by one for each white space found,
 and put '\0' in the last white space found from the end */
-void clean_token(char **tokenp)
+void clean_token(char **token_ref)
 {
     str_len_t i;
 
     /* Clean the leading white spaces */
-    IGNORE_WHITE_SPACES(*tokenp);
+    IGNORE_WHITE_SPACES(*token_ref);
 
     /* Check if every character in the token was white space, if not, clean trailing white spaces */
-    if(IS_EMPTY_STR(*tokenp) == FALSE)
+    if(IS_EMPTY_STR(*token_ref) == FALSE)
     {
-        for(i = strlen(*tokenp) - 1; i >= 0 && IS_WHITESPACE((*tokenp)[i]); i--);
-        (*tokenp)[i + 1] = '\0';
+        for(i = strlen(*token_ref) - 1; i >= 0 && IS_WHITESPACE((*token_ref)[i]); i--);
+        (*token_ref)[i + 1] = '\0';
     }
 }
 
-/* Parse the next token with strtok, clean this token from leading and trailing white spaces,
-and check if the token is valid pass args_str as NULL to continue reading tokens from the last string */
-errorCode strtok_wrapper(char * args_str, char **tokenp)
+errorCode get_next_arg(char *args_str, address *address_ref)
 {
-    errorCode res;    /* The result of the function */
-    str_len_t i;
+    errorCode res;
+    char *token;
+    /* TODO: symbol temp_symbol; */
 
-    if((*tokenp = strtok(args_str,DELIM)) == NULL)
+    TRY_THROW(res,strtok_wrapper(args_str, &token));
+
+    if(IS_NUM_FIRST_CHAR(token))
     {
-        return MISSING_PARAM;
+        TRY_THROW(res, tok_to_num(token, &address_ref->value));
     }
-
-    TRY_THROW(res, check_token_consecutive(*tokenp));
-
-    clean_token(tokenp);
-    /* Not using strlen because we need only the first 16 chars */
-    for(i = 0; (*tokenp)[i] != '\0'; i++)
+    else if(token[0] == INSTANT_CHAR)
     {
-        if(i == MAX_TOKEN_LEN)
-        {
-            return TOK_LEN_EXCEEDED;
-        }
+        token++;
+        TRY_THROW(res, tok_to_num(token, &address_ref->value));
     }
-
-    if(IS_EMPTY_STR(*tokenp))
+    else if(IS_VALID_REGISTER(token))
     {
-        /* There is no delimiter after this token, and this token is empty */
-        return args_str == NULL ? EMPTY_VAL : ARGS_EXPECTED;
+        address_ref->value = REGISTER_INDEX(token);
     }
-
-    TRY_THROW(res, check_cleaned_token(*tokenp));
+    else if(is_valid_tag(token))
+    {
+        /* TRY_THROW(res, get_symbol(token, &temp_symbol)); */
+        /* address_ref->value + temp_symbol->value; */
+    }
+    else
+    {
+        tok_index_to_num(token, &address_ref->value);
+    }
+    
 
     return OK;
 }
+
+
+/***** Privates *****/
 
 errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 {
     static translator translator_arr[] = 
     {
-        {".data", DATA_KEY},
+        {".data",   DATA_KEY},
         {".string", STRING_KEY},
         {".define", MACRO},
+        {".entry",  ENTRY},
+        {".extern", EXTERN},
         {NULL, 0}
     };
     errorCode res;
@@ -158,15 +188,85 @@ errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
     return OK;
 }
 
-errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename)
+/* Parse the next token with strtok, clean this token from leading and trailing white spaces,
+and check if the token is valid pass args_str as NULL to continue reading tokens from the last string */
+errorCode strtok_wrapper(char * args_str, char **token_ref)
 {
-    if(argc != 3)
+    errorCode res;    /* The result of the function */
+    str_len_t i;
+
+    if((*token_ref = strtok(args_str,DELIM)) == NULL)
     {
-        return INVALID_CL;
+        return MISSING_PARAM;
     }
 
-    *input_filename = *(argv + 1);
-    *output_filename= *(argv + 2);
+    TRY_THROW(res, check_token_consecutive(*token_ref));
+
+    clean_token(token_ref);
+    /* Not using strlen because we need only the first 16 chars */
+    for(i = 0; (*token_ref)[i] != '\0'; i++)
+    {
+        if(i == MAX_TOKEN_LEN)
+        {
+            return TOK_LEN_EXCEEDED;
+        }
+    }
+
+    if(IS_EMPTY_STR(*token_ref))
+    {
+        /* There is no delimiter after this token, and this token is empty */
+        return args_str == NULL ? EMPTY_VAL : ARGS_EXPECTED;
+    }
+
+    TRY_THROW(res, check_cleaned_token(*token_ref));
+
+    return OK;
+}
+
+errorCode tok_to_num(char *token, word *num_ref)
+{
+    char *end_str;          /* The pointer to the string after the parsed number */
+    int num;
+
+    num = strtol(token, &end_str, 10);
+
+    /* If there is any character after the read number, that mean that the token didn't containd just a number */
+    if(abs(*num_ref) > MAX_NUM || IS_EMPTY_STR(end_str) == FALSE)
+    {
+        return NOT_WORD_NUM;
+    }
+
+    *num_ref = num;
+    return  OK;
+}
+
+errorCode tok_index_to_num(char *token, word *num_ref)
+{
+    errorCode res;
+    char *temp_tok = token;
+    /* TODO: symbol temp_symbol; */
     
+    /* Skip to first occurence of INDEX_START and validate */
+    for(; (*temp_tok != INDEX_START) && (IS_EMPTY_STR(temp_tok) == FALSE); temp_tok++);
+    TRY_THROW(res, IS_EMPTY_STR(temp_tok) ? INVALID_ADDRESS : OK);
+    SPLIT_STR(temp_tok);
+    /* TODO: TRY_THROW(res, get_symbol(token, &temp_symbol)); */
+
+    /* Skip to first occurence of INDEX_END and validate */
+    token = temp_tok;
+    for(; (*temp_tok != INDEX_END) && (IS_EMPTY_STR(temp_tok) == FALSE); temp_tok++);
+    TRY_THROW(res, IS_EMPTY_STR(temp_tok) ? INVALID_ADDRESS : OK);
+    SPLIT_STR(temp_tok);
+
+    /* Validate this is the end of the token */
+    TRY_THROW(res, IS_EMPTY_STR(temp_tok) ? OK : INVALID_ADDRESS);
+
+    /* Set number */
+    TRY_THROW(res, tok_to_num(token, num_ref));
+    if(*num_ref < 0)
+    {
+        return INVALID_ADDRESS;
+    }
+    /* num_ref->value += temp_symbol->value; */
     return OK;
 }

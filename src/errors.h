@@ -25,7 +25,7 @@ typedef enum errorCode
     OK = -1,   
 
     /* Expected integer number, but parsed something else */
-    NOT_INT = 0,       
+    NOT_WORD_NUM = 0,       
 
     /* Assign of reserved word */
     RESERVED_WORD = 1,
@@ -70,7 +70,10 @@ typedef enum errorCode
     FILE_ERROR = 14,
 
     /* Invalid command line arguments */
-    INVALID_CL = 15
+    INVALID_CL = 15,
+
+    /*  */
+    INVALID_ADDRESS = 16
 } errorCode;
 
 typedef struct error

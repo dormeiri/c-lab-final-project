@@ -48,4 +48,6 @@ Return:         TRUE if args_str is empty, otherwise FALSE
 */
 errorCode check_empty_args(char *args_str);
 
+errorCode is_valid_tag(char *token);
+
 #endif

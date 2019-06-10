@@ -25,6 +25,11 @@ typedef struct translator
     
 } translator;
 
+/*
+Description:    Parse command line arguments and get the input filename and output filename
+ */
+errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename);
+
 /* 
 Description:            Split command line to command name and arguments string,
                         This method will also change command_line
@@ -38,13 +43,10 @@ errorCode map_statement(char *statement_line, statement *statement_ref);
 /*
 Description:    Cleans a token from trailing and leading white spaces
 Parameters:
-    - tokenp:    A pointer to the string you want to clean
+    - token_ref:    A pointer to the string you want to clean
 */
-void clean_token(char **tokenp);
+void clean_token(char **token_ref);
 
-/*
-Description:    Parse command line arguments and get the input filename and output filename
- */
-errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename);
+errorCode get_next_arg(char *args_str, address *address_ref);
 
 #endif
