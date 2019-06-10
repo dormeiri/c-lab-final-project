@@ -7,20 +7,26 @@ UTOBJ = tests/unit_tests/unit_test.o
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Main execution file
+### Main execution file ###
 
-assembly: $(OBJ)
+bin/assembly: $(OBJ)
 	$(CC) $(CFLAGS) -g $^ -o $@
+	rm $(OBJ)
 
-# Utilities commands
+assembly: bin/assembly
+
+### Utilities commands ###
 
 clean:
-	rm $(OBJ) $(UTOBJ)
+	rm $(OBJ) $(UTOBJ) bin/assembly
 
 run: assembly
-	./assembly
+	bin/assembly
 
-# Unit tests make commands
+debug: assembly
+	gdb bin/assembly
+
+### Unit tests make commands ###
 
 tests/unit_tests/parsing_test: $(OBJ) $(UTOBJ) tests/unit_tests/parsing_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
