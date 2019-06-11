@@ -1,30 +1,32 @@
 CC = gcc
 CFLAGS = -pedantic -Wall -ansi
 DEPS = src/common.h src/commons.h src/common.h src/errors.h src/helpers/parsing.h src/helpers/validations.h src/helpers/queue.h src/helpers/files.h tests/unit_tests/unit_test.h
-OBJ = src/errors.o src/helpers/parsing.o src/helpers/validations.o src/helpers/queue.o src/helpers/files.o src/assembly.o
+OBJ = src/errors.o src/helpers/parsing.o src/helpers/validations.o src/helpers/queue.o src/helpers/files.o
 UTOBJ = tests/unit_tests/unit_test.o
+ASOBJ = src/assembler.o
 
 %.o: %.c $(DEPS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 ### Main execution file ###
 
-bin/assembly: $(OBJ)
+bin/assembler: $(OBJ) $(ASOBJ)
 	$(CC) $(CFLAGS) -g $^ -o $@
-	rm $(OBJ)
+	rm $(OBJ) $(ASOBJ)
 
-assembly: bin/assembly
+assembler: bin/assembler
+: assembler
 
 ### Utilities commands ###
 
 clean:
-	rm $(OBJ) $(UTOBJ) bin/assembly
+	rm $(OBJ) $(UTOBJ) $(ASOBJ) bin/assembler
 
-run: assembly
-	bin/assembly
+run: assembler
+	bin/assembler
 
-debug: assembly
-	gdb bin/assembly
+debug: assembler
+	gdb bin/assembler
 
 ### Unit tests make commands ###
 

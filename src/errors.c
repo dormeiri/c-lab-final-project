@@ -22,7 +22,7 @@ char *error_code_msg(errorCode code)
         "Line exceeded max length",
         "Token exceeded max length",
         "Error while trying to open a file",
-        "Invalid command line arguments, please insert only two file names, input and output"
+        "Invalid command line arguments, please insert one assembler code file"
     };
 
     return error_msgs[code];
@@ -30,7 +30,7 @@ char *error_code_msg(errorCode code)
 
 void flush_error(error *error_ref)
 {
-    fprintf(stderr, "ERROR:\n\t%s (%s, line %d)\n", error_code_msg(error_ref->code), error_ref->filename, error_ref->line_num);
+    fprintf(stderr, "ERROR:\t%s (%s, line %d)\n", error_code_msg(error_ref->code), error_ref->filename, error_ref->line_num);
     fprintf(stderr, "\tLine string: %s\n", error_ref->line_str);
     fprintf(stderr, "\tToken string: %s\n", error_ref->token_str);
     free(error_ref);

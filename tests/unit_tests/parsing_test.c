@@ -8,10 +8,12 @@ void ignore_whitespaces_test();
 void clean_token_test();
 void map_statement_test(char *line, statement *expected);
 void map_statement_error_test(char *line, errorCode code_expected);
+void get_next_arg_test(char *args_str, address *expected);
 
 int main()
 {
     statement *expected = (statement *)malloc(sizeof(statement));
+    address *a_expected = (address *)malloc(sizeof(address));
 
     is_whitespace_test();    
     ignore_whitespaces_test();
@@ -20,8 +22,28 @@ int main()
     expected->tag = "TAG";
     expected->statement_type = OPERATION;
     expected->operation_type = MOV;
-    expected->args = "a,b,c";
-    map_statement_test("TAG:mov a,b,c", expected);
+    expected->args = "#1,67,+42,-3,r5";
+    map_statement_test("TAG:mov #1,67,+42,-3,r5", expected);
+    
+    a_expected->type = INSTANT;
+    a_expected->value = 1;
+    get_next_arg_test(expected->args, a_expected);
+
+    a_expected->type = DATA;
+    a_expected->value = 67;
+    get_next_arg_test(NULL, a_expected);
+
+    a_expected->type = DATA;
+    a_expected->value = 42;
+    get_next_arg_test(NULL, a_expected);    
+
+    a_expected->type = DATA;
+    a_expected->value = -3;
+    get_next_arg_test(NULL, a_expected);    
+
+    a_expected->type = REGISTER;
+    a_expected->value = 5;
+    get_next_arg_test(NULL, a_expected);    
 
     expected->tag = "TAG";
     expected->statement_type = DATA_KEY;
@@ -174,4 +196,45 @@ void map_statement_error_test(char *line, errorCode code_expected)
     code_actual = map_statement(line_copy, temp);
 
     assert(name, &code_actual, &code_expected, INT);
+}
+
+void get_next_arg_test(char *args_str, address *expected)
+{
+    char *name = "get_next_arg_test";
+    address *actual = (address *)malloc(sizeof(address));
+    char *args_str_copy;
+
+    if(args_str == NULL)
+    {
+        get_next_arg(NULL, actual);
+    }
+    else
+    {
+        args_str_copy = (char *)malloc(strlen(args_str) * sizeof(char)); /* In case we got constant string */
+        strcpy(args_str_copy, args_str);
+        get_next_arg(args_str_copy, actual);
+    }
+    assert(name, &actual->type, &expected->type, INT);
+    assert(name, &actual->value, &expected->value, INT);
+}
+
+void get_next_arg_error_test(char *args_str, errorCode expected)
+{
+    char *name = "get_next_arg_test";
+    address *actual = (address *)malloc(sizeof(address));
+    char *args_str_copy;
+    errorCode res;
+
+    if(args_str == NULL)
+    {
+        get_next_arg(NULL, actual);
+    }
+    else
+    {
+        args_str_copy = (char *)malloc(strlen(args_str) * sizeof(char)); /* In case we got constant string */
+        strcpy(args_str_copy, args_str);
+        get_next_arg(args_str_copy, actual);
+    }
+    res = get_next_arg(args_str_copy, actual);
+    assert(name, &res, &expected, INT);
 }

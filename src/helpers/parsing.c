@@ -11,10 +11,10 @@
 #define INDEX_END ']'
 #define TAG_END ':'
 #define REGISTER_CHAR 'r'
-#define REGISTER_INDEX(STR) (STR[1] - '\0')
-#define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0] || STR[0] == '-' || STR[0] == '+'))
+#define REGISTER_INDEX(STR) (STR[1] - '0')
+#define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0]) || STR[0] == '-' || STR[0] == '+')
 #define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
-#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS)
+#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && STR[2] == '\0')
 
 /* Split string in its current pointer position */
 #define SPLIT_STR(STR) *(STR++) = '\0'
@@ -37,15 +37,14 @@ errorCode strtok_wrapper(char *args_str, char **tokenp);
 errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
 errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
 
-errorCode parse_args(int argc, char *argv[], char **input_filename, char **output_filename)
+errorCode parse_args(int argc, char *argv[], char **input_filename)
 {
-    if(argc != 3)
+    if(argc != 2)
     {
         return INVALID_CL;
     }
 
     *input_filename = *(argv + 1);
-    *output_filename= *(argv + 2);
     
     return OK;
 }
@@ -106,15 +105,18 @@ errorCode get_next_arg(char *args_str, address *address_ref)
     if(IS_NUM_FIRST_CHAR(token))
     {
         TRY_THROW(res, tok_to_num(token, &address_ref->value));
+        address_ref->type = DATA;
     }
     else if(token[0] == INSTANT_CHAR)
     {
         token++;
         TRY_THROW(res, tok_to_num(token, &address_ref->value));
+        address_ref->type = INSTANT;
     }
     else if(IS_VALID_REGISTER(token))
     {
         address_ref->value = REGISTER_INDEX(token);
+        address_ref->type = REGISTER;
     }
     else if(is_valid_tag(token))
     {
@@ -123,7 +125,8 @@ errorCode get_next_arg(char *args_str, address *address_ref)
     }
     else
     {
-        tok_index_to_num(token, &address_ref->value);
+        TRY_THROW(res, tok_index_to_num(token, &address_ref->value));
+        address_ref->type = INDEX;
     }
     
 
