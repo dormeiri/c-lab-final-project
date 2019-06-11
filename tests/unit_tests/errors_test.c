@@ -12,13 +12,6 @@ int main()
 
 void print_error_test()
 {
-    error err = {
-        NOT_INT,
-        10,
-        "test.c",
-        "test_token",
-        "line test_token, 53125, test"
-    };
-
-    print_error(err);
+    error *err = create_error(NOT_WORD_NUM, 10, "test.c", "test_token", "line test_token, 532125, test");
+    flush_error(err);
 }

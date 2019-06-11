@@ -11,7 +11,7 @@ Parameters:
     - fp_ref:       The reference to the FILE pointer
 Return:             If error occured, error code, otherwise, OK
  */
-errorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
+static errorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
 
 /* 
 Description:    Generic open file function
@@ -21,7 +21,7 @@ Parameters:
     - fp_ref:   The reference to the FILE pointer
 Return:         If error occured, error code, otherwise, OK
  */
-errorCode get_file(char *filename, char *mode, FILE **fp_ref);
+static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
 
 /* Do get_file with 'r' mode */
 errorCode get_input_file(char *filename, FILE **fp_ref)

@@ -32,11 +32,11 @@
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
-errorCode tok_to_num(char *token, word *num_ref);
-errorCode tok_index_to_num(char *token, word *num_ref);
-errorCode strtok_wrapper(char *args_str, char **tokenp);
-errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
-errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
+static errorCode tok_to_num(char *token, word *num_ref);
+static errorCode tok_index_to_num(char *token, word *num_ref);
+static errorCode strtok_wrapper(char *args_str, char **tokenp);
+static errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
+static errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
 
 errorCode parse_args(int argc, char *argv[], char **input_filename)
 {
@@ -134,8 +134,33 @@ errorCode get_next_arg(char *args_str, address *address_ref)
     return OK;
 }
 
+errorCode get_string_arg(char *args_str, char **str_ref)
+{
+    errorCode res;
 
+    clean_token(&args_str);
+
+    /* Check first char after cleaning */
+    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK);
+    args_str++;
+    *str_ref = args_str;
+
+    /* Skip charcter until end of string */
+    for(;(*args_str != QUOTE_CHAR) && (IS_EMPTY_STR(args_str) == FALSE); args_str++);
+
+    /* Check if the string ends with valid char */
+    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK); 
+    SPLIT_STR(args_str);
+
+    /* Check if there is extraneous charcter after end of string */
+    TRY_THROW(res, (IS_EMPTY_STR(args_str) == FALSE) ? INVALID_STRING : OK);
+
+    return OK;
+}
+
+/********************/
 /***** Privates *****/
+/********************/
 
 errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 {
@@ -199,29 +224,17 @@ errorCode strtok_wrapper(char * args_str, char **token_ref)
     errorCode res;    /* The result of the function */
     str_len_t i;
 
-    if((*token_ref = strtok(args_str,DELIM)) == NULL)
-    {
-        return MISSING_PARAM;
-    }
-
+    TRY_THROW(res, ((*token_ref = strtok(args_str,DELIM)) == NULL) ? MISSING_PARAM : OK);
     TRY_THROW(res, check_token_consecutive(*token_ref));
 
     clean_token(token_ref);
-    /* Not using strlen because we need only the first 16 chars */
-    for(i = 0; (*token_ref)[i] != '\0'; i++)
-    {
-        if(i == MAX_TOKEN_LEN)
-        {
-            return TOK_LEN_EXCEEDED;
-        }
-    }
 
-    if(IS_EMPTY_STR(*token_ref))
-    {
-        /* There is no delimiter after this token, and this token is empty */
-        return args_str == NULL ? EMPTY_VAL : ARGS_EXPECTED;
-    }
+    /* TODO: Move all of the following to validations.c */
 
+    /* Not using strlen because we need only the first 16 chars, effiency */
+    for(i = 0; i < MAX_TOKEN_LEN && (*token_ref)[i] != '\0'; i++);
+    TRY_THROW(res, (i == MAX_TOKEN_LEN) ? TOK_LEN_EXCEEDED : OK);
+    TRY_THROW(res, (IS_EMPTY_STR(*token_ref)) ? (args_str == NULL ? EMPTY_VAL : ARGS_EXPECTED) : OK);
     TRY_THROW(res, check_cleaned_token(*token_ref));
 
     return OK;
@@ -229,18 +242,15 @@ errorCode strtok_wrapper(char * args_str, char **token_ref)
 
 errorCode tok_to_num(char *token, word *num_ref)
 {
-    char *end_str;          /* The pointer to the string after the parsed number */
-    int num;
+    char *end_str;  /* The pointer to the string after the parsed number */
 
-    num = strtol(token, &end_str, 10);
+    *num_ref = strtol(token, &end_str, 10);
 
     /* If there is any character after the read number, that mean that the token didn't containd just a number */
-    if(abs(*num_ref) > MAX_NUM || IS_EMPTY_STR(end_str) == FALSE)
+    if(IS_EMPTY_STR(end_str) == FALSE)
     {
         return NOT_WORD_NUM;
     }
-
-    *num_ref = num;
     return  OK;
 }
 
@@ -267,27 +277,7 @@ errorCode tok_index_to_num(char *token, word *num_ref)
 
     /* Set number */
     TRY_THROW(res, tok_to_num(token, num_ref));
-    if(*num_ref < 0)
-    {
-        return INVALID_ADDRESS;
-    }
-    /* num_ref->value += temp_symbol->value; */
-    return OK;
-}
-
-errorCode get_string_arg(char *args_str, char **str_ref)
-{
-    errorCode res;
-
-    clean_token(&args_str);
-    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK);
-    args_str++;
-    *str_ref = args_str;
-    for(;(*args_str != QUOTE_CHAR) && (IS_EMPTY_STR(args_str) == FALSE); args_str++);
-    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK);
-    *args_str = '\0';
-    args_str++;
-    TRY_THROW(res, (IS_EMPTY_STR(args_str) == FALSE) ? INVALID_STRING : OK);
-
+    TRY_THROW(res, (*num_ref < 0) ? INVALID_ADDRESS : OK);
+    /* TODO: num_ref->value += temp_symbol->value; */
     return OK;
 }
