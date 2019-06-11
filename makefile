@@ -30,35 +30,35 @@ debug: assembler
 
 ### Unit tests make commands ###
 
-tests/unit_tests/parsing_test: $(OBJ) $(UTOBJ) tests/unit_tests/parsing_test.o
+tests/unit_tests/bin/parsing_test: $(OBJ) $(UTOBJ) tests/unit_tests/parsing_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
 
-parsing_test: tests/unit_tests/parsing_test
-	./$^
+parsing_test: tests/unit_tests/bin/parsing_test
+	$^
 
-tests/unit_tests/validations_test: $(OBJ) $(UTOBJ) tests/unit_tests/validations_test.o
+tests/unit_tests/bin/validations_test: $(OBJ) $(UTOBJ) tests/unit_tests/bin/validations_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
 
-validations_test: tests/unit_tests/validations_test
-	./$^
+validations_test: tests/unit_tests/bin/validations_test
+	$^
 
-tests/unit_tests/errors_test: $(OBJ) $(UTOBJ) tests/unit_tests/errors_test.o
+tests/unit_tests/bin/errors_test: $(OBJ) $(UTOBJ) tests/unit_tests/errors_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
 
-errors_test: tests/unit_tests/errors_test
-	./$^
+errors_test: tests/unit_tests/bin/errors_test
+	$^
 
-tests/unit_tests/queue_test: $(OBJ) $(UTOBJ) tests/unit_tests/queue_test.o
+tests/unit_tests/bin/queue_test: $(OBJ) $(UTOBJ) tests/unit_tests/queue_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
 
-queue_test: tests/unit_tests/queue_test
-	./$^
+queue_test: tests/unit_tests/bin/queue_test
+	$^
 
-tests/unit_tests/files_test: $(OBJ) $(UTOBJ) tests/unit_tests/files_test.o
+tests/unit_tests/bin/files_test: $(OBJ) $(UTOBJ) tests/unit_tests/files_test.o
 	$(CC) $(CFLAGS) -g $^ -o $@
 
-files_test: tests/unit_tests/files_test
-	./$^
+files_test: tests/unit_tests/bin/files_test
+	$^
 
 test_all:
 	make parsing_test
