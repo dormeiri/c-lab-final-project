@@ -72,8 +72,11 @@ typedef enum errorCode
     /* Invalid command line arguments */
     INVALID_CL = 15,
 
-    /*  */
-    INVALID_ADDRESS = 16
+    /* Invalid address, for example r8 (not valid register) or a[[3] etc. */
+    INVALID_ADDRESS = 16,
+
+    /* Invalid string for .string statement. for exmaple: "fsa"fssss" */
+    INVALID_STRING = 17
 } errorCode;
 
 typedef struct error

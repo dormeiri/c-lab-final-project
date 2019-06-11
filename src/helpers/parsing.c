@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -5,7 +6,7 @@
 #include "validations.h"
 #include "parsing.h"
 
-/* TODO: Move to validations? */
+#define QUOTE_CHAR '"'
 #define INSTANT_CHAR '#'
 #define INDEX_START '['
 #define INDEX_END ']'
@@ -271,5 +272,22 @@ errorCode tok_index_to_num(char *token, word *num_ref)
         return INVALID_ADDRESS;
     }
     /* num_ref->value += temp_symbol->value; */
+    return OK;
+}
+
+errorCode get_string_arg(char *args_str, char **str_ref)
+{
+    errorCode res;
+
+    clean_token(&args_str);
+    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK);
+    args_str++;
+    *str_ref = args_str;
+    for(;(*args_str != QUOTE_CHAR) && (IS_EMPTY_STR(args_str) == FALSE); args_str++);
+    TRY_THROW(res, (*args_str != QUOTE_CHAR) ? INVALID_STRING : OK);
+    *args_str = '\0';
+    args_str++;
+    TRY_THROW(res, (IS_EMPTY_STR(args_str) == FALSE) ? INVALID_STRING : OK);
+
     return OK;
 }

@@ -2,6 +2,9 @@
 #include "../../src/helpers/parsing.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+/* TODO: Error codes check */
 
 void is_whitespace_test();
 void ignore_whitespaces_test();
@@ -9,6 +12,9 @@ void clean_token_test();
 void map_statement_test(char *line, statement *expected);
 void map_statement_error_test(char *line, errorCode code_expected);
 void get_next_arg_test(char *args_str, address *expected);
+void get_next_arg_error_test(char *args_str, errorCode expected);
+void get_string_arg_test(char *args_str, char *expected);
+void get_string_arg_error_test(char *args_str, errorCode expected);
 
 int main()
 {
@@ -54,8 +60,10 @@ int main()
     expected->tag = NULL;
     expected->statement_type = STRING_KEY;
     expected->operation_type = NONE;
-    expected->args = "a,b,c   \t ";
-    map_statement_test("  \t .string \t  a,b,c   \t ", expected);
+    expected->args = "\"a,b| cj\"   \t ";
+    map_statement_test("  \t .string \t  \"a,b| cj\"   \t ", expected);
+
+    get_string_arg_test(expected->args, "a,b| cj");
 
     expected->tag = NULL;
     expected->statement_type = OPERATION;
@@ -237,4 +245,23 @@ void get_next_arg_error_test(char *args_str, errorCode expected)
     }
     res = get_next_arg(args_str_copy, actual);
     assert(name, &res, &expected, INT);
+}
+
+void get_string_arg_test(char *args_str, char *expected)
+{
+    static char *name = "get_string_arg_test";    
+    char *expected_copy = (char *)malloc(sizeof(strlen(expected) * sizeof(char)));
+    char *args_str_copy = (char *)malloc(sizeof(strlen(args_str) * sizeof(char)));
+    char *actual;
+
+    strcpy(args_str_copy, args_str);
+    strcpy(expected_copy, expected);
+    get_string_arg(args_str_copy, &actual);
+
+    assert(name, &actual, &expected_copy, STRING);
+}
+
+void get_string_arg_error_test(char *args_str, errorCode expected)
+{
+
 }
