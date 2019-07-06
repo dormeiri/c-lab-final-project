@@ -3,26 +3,24 @@
 #include "errors.h"
 #include "commons.h"
 
-/* TODO: Do we need both create and flush? Can we do only one function that just print the error? */
-
+void flush_error(error *error_ref);
 static char *error_code_msg(errorCode code);
 
 void flush_error(error *error_ref)
 {
     fprintf(stderr, "ERROR:\t%s (%s, line %d)\n", error_code_msg(error_ref->code), error_ref->filename, error_ref->line_num);
     fprintf(stderr, "\tLine string: %s\n", error_ref->line_str);
-    fprintf(stderr, "\tToken string: %s\n", error_ref->token_str);
     free(error_ref);
 }
 
-error *create_error(errorCode code, int line_num, char *filename, char *token_str, char *line_str)
+error *create_error(errorCode code, int line_num, char *filename, char *line_str)
 {
     error *err = (error *)malloc(sizeof(error));
     err->code = code;
     err->line_num = line_num;
     err->filename = filename;
-    err->token_str = token_str;
     err->line_str = line_str;
+    flush_error(err);
 
     return err;
 }

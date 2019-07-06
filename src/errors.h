@@ -84,15 +84,9 @@ typedef struct error
     errorCode   code;       /* Error code of the error */
     int         line_num;   /* Line number where the error occured */
     char        *filename;  /* The name of file where the error occured */
-    char        *token_str; /* The token string which caused the error */
     char        *line_str;  /* The line string which caused the error */
 } error;
 
-/*  
-Description:    Print to stderr error message according to the information found in error_ref, freeing the error
-*/
-void flush_error(error *error_ref);
-
-error *create_error(errorCode code, int line_num, char *filename, char *token_str, char *line_str);
+error *create_error(errorCode code, int line_num, char *filename, char *line_str);
 
 #endif

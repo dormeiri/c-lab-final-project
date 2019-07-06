@@ -3,10 +3,13 @@
 
 typedef int word; /* TODO: bitfield */
 
+#include "helpers/queue.h"
+
 #define NUM_OF_REGISTERS 8
 
 /* 2^14 */
-#define MAX_NUM 16384
+#define MAX_NUM 8191
+#define MIN_NUM -8191
 
 typedef enum
 {
@@ -32,8 +35,9 @@ typedef enum
 
 typedef enum
 {
-    INSTANT,
-    DIRECT,
+    INSTANT,    /* Yashir */
+    DIRECT,     /* Miadi */
+    ARRAY,      
     INDEX,
     REGISTER,
     DATA
@@ -41,16 +45,23 @@ typedef enum
 
 typedef struct
 {
-    addressingType type;
-    word value;
-} address;
+    char *filename; /* The name of the file without extention (x and not x.ext for example) */
+    queue image_table;
+    queue symbol_table;
+} assembler;
 
 typedef struct
 {
-    char *tag;
-    statementType statement_type;
-    operationType operation_type;
-    char *args;
-} statement;
+    queue addresses;
+} image_line;
+
+typedef struct
+{
+    addressingType type;
+    word value;
+    char *symbol_name;
+} address;
+
+errorCode step_one(assembler *assembler);
 
 #endif
