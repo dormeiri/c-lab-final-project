@@ -1,28 +1,26 @@
 #ifndef ASSEMBLER_HEADER
 #define ASSEMBLER_HEADER
 
-typedef int word; /* TODO: bitfield */
-
 #include "helpers/queue.h"
-#include "helpers/step_one.h"
 #include <stdio.h>
 
 #define NUM_OF_REGISTERS 8
 
 /* 2^14 */
 #define MAX_NUM 8191
-#define MIN_NUM -8191 /* max_num is -8192 no? */
+#define MIN_NUM -8192
 
+typedef int word; /* TODO: bitfield? */
 typedef enum
 {
     EMPTY,
     COMMENT,
-    MACRO,
+    MACRO_KEY,
     STRING_KEY,
     DATA_KEY,
-    OPERATION,
-    ENTRY,
-    EXTERN
+    OPERATION_KEY,
+    ENTRY_KEY,
+    EXTERN_KEY
 } statementType;
 
 typedef enum
@@ -47,11 +45,12 @@ typedef enum
 
 typedef struct
 {
-    char *filename; /* The name of the file without extention (x and not x.ext for example) */
-    FILE *outputp;
-    FILE *errorsfp;
+    char *name;         /* The name of the assembler program as received from argv (withouth extention) */
+    FILE *input_fp;
+    FILE *output_fp;    /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
+    FILE *errors_fp;
     queue symbol_table;
-    first_step;
+    first_step;         /* ? */
 } assembler;
 
 
@@ -68,9 +67,5 @@ typedef struct
     word value;
     char *symbol_name;
 } address;
-
-
-errorCode step_one(assembler *assembler);
-
 
 #endif

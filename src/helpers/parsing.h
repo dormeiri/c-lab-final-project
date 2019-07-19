@@ -3,7 +3,7 @@
 
 #include "../commons.h"
 #include "../errors.h"
-#include "../assembler.h"
+#include "../step_one.h"
 
 /* Check wheter a character is white space character */
 #define IS_WHITESPACE(CHAR) (CHAR == WHITE_SPACE_1 || CHAR == WHITE_SPACE_2)
@@ -25,10 +25,7 @@ typedef struct translator
     
 } translator;
 
-/*
-Description:    Parse command line arguments and get the input filename
- */
-errorCode parse_args(int argc, char *argv[], char **input_filename);
+errorCode parse_macro_statement(statement *statement, char **symbol, word *value);
 
 /* 
 Description:            Split command line to command name and arguments string,

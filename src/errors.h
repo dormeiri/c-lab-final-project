@@ -5,12 +5,13 @@
 Description:    Do FUNC, if any error occured throw the returned error from FUNC by doing return
                 This is working only inside a function that return errorCode
 Parameters:     
-    - RES:      Declared errorCode variable to store the result of FUNC.
     - FUNC:     A function that return errorCode, if the result of the function do return with the error returned from the function
 */
-#define TRY_THROW(RES, FUNC) \
-    if((RES = FUNC) != OK) \
-        return RES
+#define TRY_THROW(FUNC) {\
+    errorCode res;\
+    if((res = FUNC) != OK) \
+        return res;\
+}
 
 /* Is errorCode variable is an error */
 #define IS_ERR(R) (R >= 0)
@@ -76,7 +77,7 @@ typedef enum errorCode
     INVALID_ADDRESS = 16,
 
     /* Invalid string for .string statement. for exmaple: "fsa"fssss" */
-    INVALID_STRING = 17
+    INVALID_STRING = 17,
     
     /*invalid combination of label in a macro statement */
     INVALID_COMB_LABEL_MACRO = 18
