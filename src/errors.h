@@ -77,6 +77,9 @@ typedef enum errorCode
 
     /* Invalid string for .string statement. for exmaple: "fsa"fssss" */
     INVALID_STRING = 17
+    
+    /*invalid combination of label in a macro statement */
+    INVALID_COMB_LABEL_MACRO = 18
 } errorCode;
 
 typedef struct error
