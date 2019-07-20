@@ -25,7 +25,8 @@ errorCode set_output_file(assembler *assember, outputFileType type);
 /* Read the next line from the input file pointer to the line_ref */
 errorCode read_line(assembler *assembler, char **line_ref);
 
-/* Not yet implemented, it supposed to translate the addresses stored in the image_line and put them in the file */
-errorCode append_line(assembler *assembler, image_line *image);
+/*  translate the addresses stored in the image_line and put them in the output file
+If operation_type is not NONE also build and append the first lien */
+errorCode append_line(assembler *assembler, image_line *image_line, operationType operation_type);
 
 #endif

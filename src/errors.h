@@ -91,6 +91,6 @@ typedef struct error
     char        *line_str;  /* The line string which caused the error */
 } error;
 
-error *create_error(errorCode code, int line_num, char *filename, char *line_str);
+void create_error(errorCode code, int line_num, char *filename, char *line_str);
 
 #endif

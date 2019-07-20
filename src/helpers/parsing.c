@@ -130,7 +130,6 @@ errorCode get_next_arg(char *args_str, address *address_ref)
         TRY_THROW(tok_index_to_num(token, &address_ref->value));
         address_ref->type = INDEX;
     }
-    
 
     return OK;
 }

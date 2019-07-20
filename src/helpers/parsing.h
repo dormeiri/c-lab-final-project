@@ -45,7 +45,7 @@ Parameters:
 void clean_token(char **token_ref);
 
 errorCode get_next_arg(char *args_str, address *address_ref);
-
 errorCode get_string_arg(char *args_str, char **str_ref);
+errorCode get_label_arg(char *args_str, char **label);
 
 #endif

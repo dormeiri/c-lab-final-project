@@ -1,4 +1,5 @@
 #include "files.h"
+#include "converts.h"
 #include "../commons.h"
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +55,23 @@ static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
 /****************/
 /*    Public    */
 /****************/
+
+errorCode append_line(assembler *assembler, image_line *image_line, operationType operation_type)
+{
+    #define APPEND_ADDRESS(VALUE) fprintf(assembler->output_fp, "%d\t%s\n", address_index++, convert_to_base4(VALUE))
+    static address_index = 0;
+    address *curr_address;
+
+    if(operation_type != NULL)
+    {
+        APPEND_ADDRESS(convert_operation_first_line(operation_type, image_line));
+    }
+
+    while(curr_address = dequeue(image_line->addresses))
+    {
+        APPEND_ADDRESS(convert_to_base4(curr_address->value));
+    }
+}
 
 errorCode set_input_file(assembler *assembler)
 {

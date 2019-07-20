@@ -13,7 +13,7 @@ void flush_error(error *error_ref)
     free(error_ref);
 }
 
-error *create_error(errorCode code, int line_num, char *filename, char *line_str)
+void create_error(errorCode code, int line_num, char *filename, char *line_str)
 {
     error *err = (error *)malloc(sizeof(error));
     err->code = code;
@@ -21,8 +21,6 @@ error *create_error(errorCode code, int line_num, char *filename, char *line_str
     err->filename = filename;
     err->line_str = line_str;
     flush_error(err);
-
-    return err;
 }
 
 char *error_code_msg(errorCode code)
