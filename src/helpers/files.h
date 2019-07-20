@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../errors.h"
 #include "../assembler.h"
+#include "../step_one.h"
 
 #define ENTRY_EXT ".ent"
 #define EXTERN_EXT ".ext"
@@ -11,9 +12,9 @@
 #define INPUT_EXT ".as"
 
 typedef enum {
-    ENTRY,
-    EXTERN,
-    OBJECT
+    ENTRY_FILE,
+    EXTERN_FILE,
+    OBJECT_FILE
 } outputFileType;
 
 /* Set the input file pointer in the assembler by the name of the assembler */
@@ -25,8 +26,8 @@ errorCode set_output_file(assembler *assember, outputFileType type);
 /* Read the next line from the input file pointer to the line_ref */
 errorCode read_line(assembler *assembler, char **line_ref);
 
-/*  translate the addresses stored in the image_line and put them in the output file
-If operation_type is not NONE also build and append the first lien */
-errorCode append_line(assembler *assembler, image_line *image_line, operationType operation_type);
+/* TODO: Should be in step_one? */
+/* Translate the current image_line of the current statement in step_one and append the addresses to the file */
+errorCode append_line(step_one *step_one);
 
 #endif

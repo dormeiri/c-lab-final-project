@@ -59,6 +59,7 @@ typedef struct
 
 typedef struct
 {
+    int *address_index;
     queue *addresses;
 } image_line;
 

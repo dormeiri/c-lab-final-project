@@ -56,18 +56,18 @@ static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
 /*    Public    */
 /****************/
 
-errorCode append_line(assembler *assembler, image_line *image_line, operationType operation_type)
+errorCode append_line(step_one *step_one)
 {
-    #define APPEND_ADDRESS(VALUE) fprintf(assembler->output_fp, "%d\t%s\n", address_index++, convert_to_base4(VALUE))
-    static address_index = 0;
-    address *curr_address;
+    #define APPEND_ADDRESS(VALUE) fprintf(step_one->assembler->output_fp, "%d\t%s\n", step_one->address_index++, convert_to_base4(VALUE))
 
-    if(operation_type != NULL)
+    statement *statement = step_one->curr_statement;
+    address *curr_address;
+    if(step_one->curr_statement->operation_type != NONE)
     {
-        APPEND_ADDRESS(convert_operation_first_line(operation_type, image_line));
+        APPEND_ADDRESS(convert_operation_first_line(statement->operation_type, statement->image_line));
     }
 
-    while(curr_address = dequeue(image_line->addresses))
+    while(curr_address = dequeue(statement->image_line->addresses))
     {
         APPEND_ADDRESS(convert_to_base4(curr_address->value));
     }
@@ -83,15 +83,15 @@ errorCode set_output_file(assembler *assembler, outputFileType type)
     char *filename;
     switch (type)
     {
-        case ENTRY:
+        case ENTRY_FILE:
             filename = get_filename(assembler->name, ENTRY_EXT);
             break;
 
-        case EXTERN:
+        case EXTERN_FILE:
             filename = get_filename(assembler->name, EXTERN_EXT);
             break;
 
-        case OBJECT:
+        case OBJECT_FILE:
             filename = get_filename(assembler->name, OBJECT_EXT);
             break;
         
