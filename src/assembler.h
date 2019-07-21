@@ -48,9 +48,8 @@ typedef struct
     char *name;         /* The name of the assembler program as received from argv (withouth extention) */
     FILE *input_fp;
     FILE *output_fp;    /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
-    /* FILE *errors_fp; */    /* Lets talk about it, I came with conclusion that we need to use stderr. */
+    queue *symbol_table;
     boolean succeed;
-    queue symbol_table;
     first_step;         /* ? */
 } assembler;
 
