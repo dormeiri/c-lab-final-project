@@ -141,7 +141,7 @@ errorCode get_next_arg(step_one *step_one, address *address_ref)
     address_ref = (address *)malloc(sizeof(address_ref));
     if(address_ref == NULL)
     {
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     TRY_THROW(strtok_wrapper(step_one->curr_statement->args, &token));

@@ -11,6 +11,11 @@ queue *initilize_queue(size_t data_size)
     return new_queue;
 }
 
+void free_queue(queue *queue)
+{
+    while(dequeue(queue));
+}
+
 void enqueue(queue *queue, void *value_ref)
 {
     /* Allocate memory for new node */
@@ -44,14 +49,20 @@ void enqueue(queue *queue, void *value_ref)
 
 void *dequeue(queue *queue)
 {
-    queue_node *removed_node = queue->head;
-    void *value_ref = malloc(queue->data_size);
+    queue_node *removed_node;
+    void *value_ref;
 
-    if(value_ref == NULL)
+    if(IS_EMPTY_QUEUE(queue))
+    {
+        return NULL;
+    }
+
+    if((value_ref = malloc(queue->data_size)) == NULL)
     {
         exit(EXIT_FAILURE);
     }
 
+    removed_node = queue->head;
     /* Copy the data from the node to local variable because we are going to free the node */
     memcpy(value_ref, queue->head->data, queue->data_size);
 

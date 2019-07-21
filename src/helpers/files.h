@@ -14,8 +14,12 @@
 typedef enum {
     ENTRY_FILE,
     EXTERN_FILE,
-    OBJECT_FILE
+    OBJECT_FILE,
+    TEMP_OBJECT_FILE
 } outputFileType;
+
+
+void frecopy_temp_to_obj(assembler *assembler);
 
 /* Set the input file pointer in the assembler by the name of the assembler */
 errorCode set_input_file(assembler *assember);

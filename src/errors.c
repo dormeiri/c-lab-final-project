@@ -6,10 +6,22 @@
 void flush_error(error *error_ref);
 static char *error_code_msg(errorCode code);
 
+#define PRINT_ERR(STREAM, ERR) {\
+    fprintf(STREAM, "ERROR:\t%s (%s, line %d)\n", error_code_msg(ERR->code), ERR->filename, ERR->line_num);\
+    fprintf(STREAM, "\tLine string: %s\n", ERR->line_str);\
+}
+
 void flush_error(error *error_ref)
 {
-    fprintf(stderr, "ERROR:\t%s (%s, line %d)\n", error_code_msg(error_ref->code), error_ref->filename, error_ref->line_num);
-    fprintf(stderr, "\tLine string: %s\n", error_ref->line_str);
+    FILE *error_log;
+
+    PRINT_ERR(stderr, error_ref);
+    if(!error_log)
+    {
+        error_log = fopen(error_ref->filename, "a");
+    }
+    PRINT_ERR(error_log, error_ref);
+    fclose(error_log);
     free(error_ref);
 }
 
@@ -43,6 +55,7 @@ char *error_code_msg(errorCode code)
         "Token exceeded max length",
         "Error while trying to open a file",
         "Invalid command line arguments, please insert one assembler code file"
+        /* TODO: Complete and make sure */
     };
 
     return error_msgs[code];

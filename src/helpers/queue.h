@@ -45,4 +45,11 @@ Return:         The value of the dequeued node
 */
 void *dequeue(queue *queue);
 
+/*
+Description:    Free queue
+Parameters:
+    queue:      Pointer to a queue
+*/
+void free_queue(queue *queue);
+
 #endif

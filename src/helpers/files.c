@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Copy source file to dest file, used to copy temp file stream to object file */
+static void copy_file(FILE *source, FILE *dest);
+
 static char *get_filename(const char *name, const char *extention);
 /*
 Description:    Open the input file to read and gets pointer to that file
@@ -56,6 +59,15 @@ static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
 /*    Public    */
 /****************/
 
+void frecopy_temp_to_obj(assembler *assembler)
+{
+    FILE *temp_fp = assembler->output_fp;
+    set_output_file(assembler, OBJECT_FILE);
+
+    copy_file(temp_fp, assembler->output_fp);
+    fclose(temp_fp);
+}
+
 errorCode append_line(step_one *step_one)
 {
     #define APPEND_ADDRESS(VALUE) fprintf(step_one->assembler->output_fp, "%d\t%s\n", step_one->address_index++, convert_to_base4(VALUE))
@@ -94,6 +106,14 @@ errorCode set_output_file(assembler *assembler, outputFileType type)
         case OBJECT_FILE:
             filename = get_filename(assembler->name, OBJECT_EXT);
             break;
+
+        case TEMP_OBJECT_FILE:
+            assembler->output_fp = tmpfile();
+            if(assembler->output_fp == NULL)
+            {
+                exit(EXIT_FAILURE); /* it is not error for user, shuold be treated like malloc fail */
+            }
+            return OK;
         
         default:
             filename = NULL;
@@ -114,6 +134,18 @@ errorCode append_line(assembler *assembler, image_line *line)
 /******************/
 /*    Privates    */
 /******************/
+
+void copy_file(FILE *source, FILE *dest)
+{
+    char c;
+
+    rewind(source);
+    rewind(dest);
+    while((c = fgetc(source)) != EOF)
+    {
+        putc(c, dest);
+    }
+}
 
 /* Do get_file with 'r' mode */
 errorCode get_input_file(char *filename, FILE **fp_ref)
@@ -195,7 +227,7 @@ char *get_filename(const char *name, const char *extention)
     filename = (char *)malloc((strlen(name) + strlen(extention)) * sizeof(char));
     if(filename == NULL)
     {
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     strcpy(filename, name);
