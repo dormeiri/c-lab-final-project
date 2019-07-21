@@ -3,9 +3,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "symbols.h"
 #include "validations.h"
 #include "parsing.h"
 
+#define MACRO_SET_CHAR '='
 #define QUOTE_CHAR '"'
 #define INSTANT_CHAR '#'
 #define INDEX_START '['
@@ -16,6 +18,7 @@
 #define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0]) || STR[0] == '-' || STR[0] == '+')
 #define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
 #define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && STR[2] == '\0')
+#define IS_ARRAY(STR) (strchr(STR, '['))
 
 /* Split string in its current pointer position */
 #define SPLIT_STR(STR) *(STR++) = '\0'
@@ -32,30 +35,60 @@
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
-static errorCode tok_to_num(char *token, word *num_ref);
-static errorCode tok_index_to_num(char *token, word *num_ref);
-static errorCode strtok_wrapper(char *args_str, char **tokenp);
+static errorCode tok_to_num(step_one *step_one, char *token, word *num_ref);
+static errorCode tok_to_array(step_one *step_one, char *token, address *address_ref);
+static errorCode strtok_wrapper(step_one *step_one, char **tokenp);
 static errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
 static errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
 
-errorCode parse_macro_statement(statement *statement, char **symbol, word *value)
+errorCode get_label_arg(step_one *step_one, char **label)
 {
-    char *result;
-    /* malloc */
-    IGNORE_WHITE_SPACES(statement->args);
-    result = statement->args;
-    for(;(IS_EMPTY_STR(statement->args) || IS_WHITESPACE(*statement->args) || *statement->args == '=') == FALSE; statement->args++);
-    /* validate empty */
-    *symbol = result;
+    label = &step_one->curr_statement->args;
+    clean_token(label);
+    return is_valid_tag(*label);
+}
 
-    /*TODO: Continue */
+errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
+{
+    /* TODO: Break down to smaller funcitons, try to remove duplicates */
+
+    char *args_str = step_one->curr_statement->statement->args;
+    IGNORE_WHITE_SPACES(args_str);
+    symbol = &args_str;
+    for(;!(IS_EMPTY_STR(args_str) || IS_WHITESPACE(*args_str) || *args_str == MACRO_SET_CHAR); args_str++);
+    if(*args_str == MACRO_SET_CHAR)
+    {
+        SPLIT_STR(args_str);
+        clean_token(&args_str);
+        tok_to_num(step_one, args_str, value);
+    }
+    else if(IS_EMPTY_STR(args_str))
+    {
+        return INVALID_MACRO_STATEMENT;
+    }
+    else /* Whitespace */
+    {
+        IGNORE_WHITE_SPACES(args_str);
+        if(*args_str == MACRO_SET_CHAR)
+        {
+            SPLIT_STR(args_str);
+            clean_token(&args_str);
+            tok_to_num(step_one, args_str, value);
+        }
+        else
+        {
+            return INVALID_MACRO_STATEMENT;
+        }
+    }
 
     return OK;
 }
 
-errorCode map_statement(char *statement_line, statement *statement_ref)
+errorCode map_statement(step_one *step_one)
 {   
     char *statement_key;
+    statement *statement_ref = step_one->curr_statement;
+    char *statement_line = step_one->curr_line;
 
     READ_FIRST_WORD(statement_line, statement_ref->tag);
     if(*statement_line == TAG_END)
@@ -97,22 +130,29 @@ void clean_token(char **token_ref)
     }
 }
 
-errorCode get_next_arg(char *args_str, address *address_ref)
+errorCode get_next_arg(step_one *step_one, address *address_ref)
 {
     char *token;
     /* TODO: symbol temp_symbol; */
+    address_ref = (address *)malloc(sizeof(address_ref));
+    if(address_ref == NULL)
+    {
+        exit(1);
+    }
 
-    TRY_THROW(strtok_wrapper(args_str, &token));
+    TRY_THROW(strtok_wrapper(step_one->curr_statement->args, &token));
+    step_one->curr_statement->args = NULL;
+    address_ref->symbol_name = NULL;
 
     if(IS_NUM_FIRST_CHAR(token))
     {
-        TRY_THROW(tok_to_num(token, &address_ref->value));
+        TRY_THROW(tok_to_num(step_one, token, &address_ref->value));
         address_ref->type = DATA;
     }
     else if(token[0] == INSTANT_CHAR)
     {
         token++;
-        TRY_THROW(tok_to_num(token, &address_ref->value));
+        TRY_THROW(tok_to_num(step_one, token, &address_ref->value));
         address_ref->type = INSTANT;
     }
     else if(IS_VALID_REGISTER(token))
@@ -120,22 +160,27 @@ errorCode get_next_arg(char *args_str, address *address_ref)
         address_ref->value = REGISTER_INDEX(token);
         address_ref->type = REGISTER;
     }
+    else if(IS_ARRAY(token))
+    {
+        TRY_THROW(tok_to_array(step_one, token, address_ref));
+    }
     else if(is_valid_tag(token))
     {
-        /* TRY_THROW(res, get_symbol(token, &temp_symbol)); */
-        /* address_ref->value + temp_symbol->value; */
+        address_ref->symbol_name = token;
+        address_ref->type = DIRECT;
     }
     else
     {
-        TRY_THROW(tok_index_to_num(token, &address_ref->value));
-        address_ref->type = INDEX;
+        return INVALID_ADDRESS;
     }
+    
 
     return OK;
 }
 
-errorCode get_string_arg(char *args_str, char **str_ref)
+errorCode get_string_arg(step_one *step_one, char **str_ref)
 {
+    char *args_str = step_one->curr_statement->args;
     clean_token(&args_str);
 
     /* Check first char after cleaning */
@@ -216,9 +261,10 @@ errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 
 /* Parse the next token with strtok, clean this token from leading and trailing white spaces,
 and check if the token is valid pass args_str as NULL to continue reading tokens from the last string */
-errorCode strtok_wrapper(char * args_str, char **token_ref)
+errorCode strtok_wrapper(step_one *step_one, char **token_ref)
 {
     str_len_t i;
+    char *args_str = step_one->curr_statement->args;
 
     TRY_THROW(((*token_ref = strtok(args_str,DELIM)) == NULL) ? MISSING_PARAM : OK);
     TRY_THROW(check_token_consecutive(*token_ref));
@@ -236,44 +282,48 @@ errorCode strtok_wrapper(char * args_str, char **token_ref)
     return OK;
 }
 
-errorCode tok_to_num(char *token, word *num_ref)
+errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
 {
     char *end_str;  /* The pointer to the string after the parsed number */
 
-    *num_ref = strtol(token, &end_str, 10);
-
-    /* If there is any character after the read number, that mean that the token didn't containd just a number */
-    if(IS_EMPTY_STR(end_str) == FALSE)
+    /* If the token is macro then take the value from the token, otherwise parse the token string to number */
+    if(!find_macro(step_one, token, num_ref))
     {
-        return NOT_WORD_NUM;
+        *num_ref = strtol(token, &end_str, 10);
+
+        /* If there is any character after the read number, that mean that the token didn't containd just a number */
+        if(IS_EMPTY_STR(end_str) == FALSE)
+        {
+            return NOT_WORD_NUM;
+        }
     }
     return  OK;
 }
 
-errorCode tok_index_to_num(char *token, word *num_ref)
+errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
 {
-    errorCode res;
-    char *temp_tok = token;
-    /* TODO: symbol temp_symbol; */
-    
-    /* Skip to first occurence of INDEX_START and validate */
-    for(; (*temp_tok != INDEX_START) && (IS_EMPTY_STR(temp_tok) == FALSE); temp_tok++);
-    TRY_THROW(IS_EMPTY_STR(temp_tok) ? INVALID_ADDRESS : OK);
-    SPLIT_STR(temp_tok);
-    /* TODO: TRY_THROW(res, get_symbol(token, &temp_symbol)); */
+    char *index_token; /* The string which represent the index */
+
+    address_ref->type = ARRAY;
+
+    /* Set symbol name of the array */    
+    address_ref->symbol_name = token;
+    for(; (*token != INDEX_START) && (IS_EMPTY_STR(token) == FALSE); token++);
+    TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
+    SPLIT_STR(token);
 
     /* Skip to first occurence of INDEX_END and validate */
-    token = temp_tok;
-    for(; (*temp_tok != INDEX_END) && (IS_EMPTY_STR(temp_tok) == FALSE); temp_tok++);
-    TRY_THROW(IS_EMPTY_STR(temp_tok) ? INVALID_ADDRESS : OK);
-    SPLIT_STR(temp_tok);
+    index_token = token;
+    for(; (*token != INDEX_END) && (IS_EMPTY_STR(token) == FALSE); token++);
+    TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
+    SPLIT_STR(token);
 
     /* Validate this is the end of the token */
-    TRY_THROW(IS_EMPTY_STR(temp_tok) ? OK : INVALID_ADDRESS);
+    TRY_THROW(IS_EMPTY_STR(token) ? OK : INVALID_ADDRESS);
 
     /* Set number */
-    TRY_THROW(tok_to_num(token, num_ref));
-    TRY_THROW((*num_ref < 0) ? INVALID_ADDRESS : OK);
+    TRY_THROW(tok_to_num(step_one, index_token, &address_ref->value));
+    TRY_THROW((address_ref->value < 0) ? INVALID_ADDRESS : OK);
     /* TODO: num_ref->value += temp_symbol->value; */
     return OK;
 }

@@ -1,6 +1,8 @@
 #include "validations.h"
 #include "parsing.h"
 #include "../commons.h"
+#include <ctype.h>
+
 
 /* Check if there is DELIM_CHAR in command_str, 
 then check if the first character in args_str is DELIM_CHAR */
@@ -67,6 +69,8 @@ errorCode check_empty_args(char *args_str)
 
 errorCode is_valid_tag(char *token)
 {
-    /* TODO: Implement */
-    return OK;
+    char i = 1;
+    TRY_THROW(isalpha(*token));
+    for(token++; i > MAX_TAG_LEN || isalnum(*token); token++, i++);
+    return *token ? INVALID_TAG : OK;
 }

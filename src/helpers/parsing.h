@@ -25,7 +25,8 @@ typedef struct translator
     
 } translator;
 
-errorCode parse_macro_statement(statement *statement, char **symbol, word *value);
+/* Parse the arguments of macro statement */
+errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value);
 
 /* 
 Description:            Split command line to command name and arguments string,
@@ -35,7 +36,7 @@ Parameters:
     - statement_ref:    Reference to statement structs, this is the output
 Return:                 OK if ran as expected, otherwise, error code
 */
-errorCode map_statement(char *statement_line, statement *statement_ref);
+errorCode map_statement(step_one *step_one);
 
 /*
 Description:    Cleans a token from trailing and leading white spaces
@@ -44,8 +45,10 @@ Parameters:
 */
 void clean_token(char **token_ref);
 
-errorCode get_next_arg(char *args_str, address *address_ref);
-errorCode get_string_arg(char *args_str, char **str_ref);
-errorCode get_label_arg(char *args_str, char **label);
+errorCode get_next_arg(step_one *step_one, address *address_ref);
+errorCode get_string_arg(step_one *step_one, char **str_ref);
+
+/* not yet implemented, used to get the label in the argument of entry and extern instructions*/
+errorCode get_label_arg(step_one *step_one, char **label);
 
 #endif
