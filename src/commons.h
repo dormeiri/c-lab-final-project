@@ -23,6 +23,8 @@ typedef enum boolean
 #define WHITE_SPACE_1 WHITE_SPACE_STR[0]
 #define WHITE_SPACE_2 WHITE_SPACE_STR[1]
 
+#define MAX_TAG_LEN 31
+
 /* The max size of a buffer */
 #define LINE_BUFFER_LEN 81
 

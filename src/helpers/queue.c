@@ -17,14 +17,14 @@ void enqueue(queue *queue, void *value_ref)
     queue_node *new_node = (queue_node *)malloc(sizeof(queue_node));
     if(new_node == NULL)
     {
-        exit(EXIT_FAILURE); /* TODO: Should we free before? */
+        exit(EXIT_FAILURE);
     }
 
     /* Allocate memory for the new node's data (generic type) */
     new_node->data = malloc(queue->data_size);
     if(new_node->data == NULL)
     {
-        exit(EXIT_FAILURE); /* TODO: should we free before? */
+        exit(EXIT_FAILURE);
     }
 
     new_node->data = value_ref;
@@ -49,7 +49,7 @@ void *dequeue(queue *queue)
 
     if(value_ref == NULL)
     {
-        exit(EXIT_FAILURE); /* TODO: should we free before? */
+        exit(EXIT_FAILURE);
     }
 
     /* Copy the data from the node to local variable because we are going to free the node */

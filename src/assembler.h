@@ -37,8 +37,8 @@ typedef enum
 {
     INSTANT,    /* Yashir */
     DIRECT,     /* Miadi */
-    ARRAY,      
-    INDEX,
+    ARRAY,      /* During step1, the value of address in array type is the value of the index,
+                 * During step2, the value of the address is += the value of the symbol */
     REGISTER,
     DATA
 } addressingType;
