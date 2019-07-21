@@ -1,3 +1,8 @@
+/* 
+Guidelines: 
+    - Invalid tag are checked in parsing level
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -133,7 +138,6 @@ void clean_token(char **token_ref)
 errorCode get_next_arg(step_one *step_one, address *address_ref)
 {
     char *token;
-    /* TODO: symbol temp_symbol; */
     address_ref = (address *)malloc(sizeof(address_ref));
     if(address_ref == NULL)
     {
@@ -271,8 +275,6 @@ errorCode strtok_wrapper(step_one *step_one, char **token_ref)
 
     clean_token(token_ref);
 
-    /* TODO: Move all of the following to validations.c */
-
     /* Not using strlen because we need only the first 16 chars, effiency */
     for(i = 0; i < MAX_TOKEN_LEN && (*token_ref)[i] != '\0'; i++);
     TRY_THROW((i == MAX_TOKEN_LEN) ? TOK_LEN_EXCEEDED : OK);
@@ -308,9 +310,11 @@ errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
 
     /* Set symbol name of the array */    
     address_ref->symbol_name = token;
-    for(; (*token != INDEX_START) && (IS_EMPTY_STR(token) == FALSE); token++);
+    for(; *token != INDEX_START && !IS_EMPTY_STR(token); token++);
     TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
     SPLIT_STR(token);
+    clean_token(&address_ref->symbol_name);
+    TRY_THROW(is_valid_tag(address_ref->symbol_name) ? OK : INVALID_TAG);
 
     /* Skip to first occurence of INDEX_END and validate */
     index_token = token;
@@ -324,6 +328,5 @@ errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
     /* Set number */
     TRY_THROW(tok_to_num(step_one, index_token, &address_ref->value));
     TRY_THROW((address_ref->value < 0) ? INVALID_ADDRESS : OK);
-    /* TODO: num_ref->value += temp_symbol->value; */
     return OK;
 }
