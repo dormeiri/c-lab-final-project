@@ -7,7 +7,7 @@
 
 boolean run_assembler(const char *filename);
 void free_assembler(assembler *assembler);
-errorCode create_assembler(const char *name, assembler *out); /* TODO: Make all output by pointer functions out parameter name to "out" */
+errorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
 
 int main(int argc, char **argv)
 {
@@ -24,11 +24,17 @@ int main(int argc, char **argv)
 
 boolean run_assembler(const char *filename)
 {
+    errorCode res;
     assembler *curr_assembler = NULL;
 
-    printf("Compiling %s\n", filename);
+    printf("Started compiling %s\n", filename);
 
-    create_assembler(filename, curr_assembler);
+    if((res = create_assembler(filename, &curr_assembler)) != OK)
+    {
+        create_error(res, -1, filename, NULL);
+        return FALSE;
+    }
+    
     run_step_one(curr_assembler);
     if(curr_assembler->succeed)
     {
@@ -49,19 +55,21 @@ boolean run_assembler(const char *filename)
     return curr_assembler->succeed;
 }
 
-errorCode create_assembler(const char *name, assembler *out)
+errorCode create_assembler(const char *name, assembler **out)
 {
-    if(!(out = (assembler *)malloc(sizeof(assembler))))
+    if(!(*out = (assembler *)malloc(sizeof(assembler))))
     {
         exit(EXIT_FAILURE);
     }
-    out->succeed = TRUE;
-    out->name = name;
-    out->symbols_table = (symbols_table *)malloc(sizeof(symbols_table));
+    (*out)->succeed = TRUE;
+    (*out)->name = name;
+    if(!((*out)->symbols_table = (symbols_table *)malloc(sizeof(symbols_table))))
+    {
+        exit(EXIT_FAILURE);
+    }
 
-    TRY_THROW(set_input_file(out));
-    TRY_THROW(set_output_file(out, TEMP_OBJECT_FILE));
-    printf("Temp file created\n");
+    TRY_THROW(set_input_file(*out));
+    TRY_THROW(set_output_file(*out, TEMP_OBJECT_FILE));
 
     return OK;
 }

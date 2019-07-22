@@ -6,12 +6,17 @@
 #include "helpers/queue.h"
 
 #define NUM_OF_REGISTERS 8
-
+#define WORD_SIZE 14
 /* 2^14 */
 #define MAX_NUM 8191
 #define MIN_NUM -8192
 
-typedef int word; /* TODO: bitfield? */
+/* typedef struct word
+{
+    int value:WORD_SIZE;
+} word; */
+typedef int word;
+
 typedef enum
 {
     EMPTY,

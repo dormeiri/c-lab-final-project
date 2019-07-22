@@ -57,9 +57,11 @@ errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 {
     /* TODO: Break down to smaller funcitons, try to remove duplicates */
 
-    char *args_str = step_one->curr_statement->args;
+    char *args_str;
+
+    args_str = step_one->curr_statement->args;
     IGNORE_WHITE_SPACES(args_str);
-    symbol = &args_str;
+    *symbol = args_str;
     for(;!(IS_EMPTY_STR(args_str) || IS_WHITESPACE(*args_str) || *args_str == MACRO_SET_CHAR); args_str++);
     if(*args_str == MACRO_SET_CHAR)
     {
@@ -135,10 +137,10 @@ void clean_token(char **token_ref)
     }
 }
 
-errorCode get_next_arg(step_one *step_one, address *address_ref)
+errorCode get_next_arg(step_one *step_one, address **address_ref)
 {
     char *token;
-    address_ref = (address *)malloc(sizeof(address_ref));
+    *address_ref = (address *)malloc(sizeof(address_ref));
     if(address_ref == NULL)
     {
         exit(EXIT_FAILURE);
@@ -146,32 +148,41 @@ errorCode get_next_arg(step_one *step_one, address *address_ref)
 
     TRY_THROW(strtok_wrapper(step_one, &token));
     step_one->curr_statement->args = NULL;
-    address_ref->symbol_name = NULL;
+    (*address_ref)->symbol_name = NULL;
 
     if(IS_NUM_FIRST_CHAR(token))
     {
-        TRY_THROW(tok_to_num(step_one, token, &address_ref->value));
-        address_ref->type = DATA;
+        TRY_THROW(tok_to_num(step_one, token, &(*address_ref)->value));
+        (*address_ref)->type = DATA;
     }
     else if(token[0] == INSTANT_CHAR)
     {
         token++;
-        TRY_THROW(tok_to_num(step_one, token, &address_ref->value));
-        address_ref->type = INSTANT;
+        TRY_THROW(tok_to_num(step_one, token, &(*address_ref)->value));
+        (*address_ref)->type = INSTANT;
     }
     else if(IS_VALID_REGISTER(token))
     {
-        address_ref->value = REGISTER_INDEX(token);
-        address_ref->type = REGISTER;
+        (*address_ref)->value = REGISTER_INDEX(token);
+        (*address_ref)->type = REGISTER;
     }
     else if(IS_ARRAY(token))
     {
-        TRY_THROW(tok_to_array(step_one, token, address_ref));
+        TRY_THROW(tok_to_array(step_one, token, (*address_ref)));
     }
     else if(is_valid_tag(token))
     {
-        address_ref->symbol_name = token;
-        address_ref->type = DIRECT;
+        symbol *sym;
+        if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property == MACRO_SYM)
+        {
+            (*address_ref)->value = sym->value;
+            (*address_ref)->type = DATA;
+        }
+        else
+        {
+            (*address_ref)->symbol_name = token;
+            (*address_ref)->type = DIRECT;
+        }
     }
     else
     {
@@ -291,6 +302,7 @@ errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
 
     /* If the token is macro then take the value from the token, otherwise parse the token string to number */
     sym = find_symbol(step_one->assembler->symbols_table, token);
+
     if(!(sym && sym->property == MACRO_SYM))
     {
         *num_ref = strtol(token, &end_str, 10);

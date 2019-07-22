@@ -5,8 +5,7 @@
 #include "commons.h"
 
 #define PRINT_ERR(STREAM, ERR) {\
-    fprintf(STREAM, "ERROR:\t%s (%s, line %d)\n", error_code_msg(ERR->code), ERR->filename, ERR->line_num);\
-    fprintf(STREAM, "\tLine string: %s\n", ERR->line_str);\
+    fprintf(STREAM, "%s:%d: error:\n\t%s\n\t%s\n", ERR->filename, ERR->line_num, error_code_msg(ERR->code), ERR->line_str);\
 }
 
 #define LOG_FILENAME(DEST) {\
@@ -49,7 +48,11 @@ void flush_error(error *error_ref)
 
 void create_error(errorCode code, int line_num, const char *filename, const char *line_str)
 {
-    error *err = (error *)malloc(sizeof(error));
+    error *err;
+    if(!(err = (error *)malloc(sizeof(error))))
+    {
+        exit(EXIT_FAILURE);
+    }
     err->code = code;
     err->line_num = line_num;
     err->filename = filename;
@@ -76,7 +79,12 @@ char *error_code_msg(errorCode code)
         "Line exceeded max length",
         "Token exceeded max length",
         "Error while trying to open a file",
-        "Invalid command line arguments, please insert one assembler code file"
+        "Invalid command line arguments, please insert one assembler code file", /* 15 */
+        "16",
+        "17",
+        "18",
+        "19",
+        "20"
         /* TODO: Complete and make sure */
     };
 
