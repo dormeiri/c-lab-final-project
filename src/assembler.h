@@ -48,7 +48,7 @@ typedef struct
     char *name;         /* The name of the assembler program as received from argv (withouth extention) */
     FILE *input_fp;
     FILE *output_fp;    /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
-    queue *symbol_table;
+    symbols_table symbols_table;
     boolean succeed;
     first_step;         /* ? */
 } assembler;

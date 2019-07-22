@@ -83,7 +83,10 @@ typedef enum errorCode
     INVALID_COMB_LABEL_MACRO = 18,
     
     /* Macro statement structure is invalid */
-    INVALID_MACRO_STATEMENT = 19
+    INVALID_MACRO_STATEMENT = 19,
+
+    /* Symbol name declared twice */
+    SYMBOL_ALREADY_EXIST = 20
 } errorCode;
 
 typedef struct error
@@ -94,6 +97,6 @@ typedef struct error
     char        *line_str;  /* The line string which caused the error */
 } error;
 
-void create_error(errorCode code, int line_num, char *filename, char *line_str);
+void create_error(errorCode code, int line_num, const char *filename, const char *line_str);
 
 #endif
