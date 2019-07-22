@@ -5,20 +5,21 @@
 #include "helpers/parsing.h"
 #include "helpers/files.h"
 
-void run_assembler(const char *filename);
+boolean run_assembler(const char *filename);
 void free_assembler(assembler *assembler);
 errorCode create_assembler(const char *name, assembler *out); /* TODO: Make all output by pointer functions out parameter name to "out" */
 
 int main(int argc, char **argv)
 {
-    for(argv++; argv; argv++)
+    if(argc == 1)
     {
-        
+        create_error(INVALID_CL, -1, NULL, NULL);
     }
+    while(*(++argv) && run_assembler(*argv));
     return EXIT_SUCCESS;
 }
 
-void run_assembler(const char *filename)
+boolean run_assembler(const char *filename)
 {
     assembler *curr_assembler;
     create_assembler(filename, &curr_assembler);
