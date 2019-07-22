@@ -1,8 +1,9 @@
 #ifndef ASSEMBLER_HEADER
 #define ASSEMBLER_HEADER
 
-#include "helpers/queue.h"
 #include <stdio.h>
+#include "errors.h"
+#include "helpers/queue.h"
 
 #define NUM_OF_REGISTERS 8
 
@@ -43,30 +44,40 @@ typedef enum
     DATA
 } addressingType;
 
+#define SYMBOL_HASHSIZE 100 /* This is the number of available hashes, this is not the limit of the hashset size */
+
+typedef enum 
+{
+    MACRO_SYM,
+    DATA_SYM,
+    CODE_SYM,
+    EXTERN_SYM,
+    ENTRY_SYM
+} symbolProperty;
+
+typedef struct 
+{
+    const char *symbol_name;
+    symbolProperty property;
+    word value;
+    queue *addresses;
+} symbol;
+
+typedef struct symbol_list
+{
+    struct symbol_list *next;
+    symbol *value;
+} symbol_list;
+
+typedef symbol_list *symbols_table[SYMBOL_HASHSIZE];
+
 typedef struct
 {
-    char *name;         /* The name of the assembler program as received from argv (withouth extention) */
+    const char *name;         /* The name of the assembler program as received from argv (withouth extention) */
     FILE *input_fp;
     FILE *output_fp;    /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
-    symbols_table symbols_table;
+    symbols_table *symbols_table;
     boolean succeed;
-    first_step;         /* ? */
 } assembler;
-
-
-/* address, type, symbole, locations[], *next */
-
-typedef struct
-{
-    int *address_index;
-    queue *addresses;
-} image_line;
-
-typedef struct
-{
-    addressingType type;
-    word value;
-    char *symbol_name; /* Used for step 1 where value not found in symbol table */
-} address;
 
 #endif

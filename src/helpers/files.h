@@ -30,8 +30,6 @@ errorCode set_output_file(assembler *assember, outputFileType type);
 /* Read the next line from the input file pointer to the line_ref */
 errorCode read_line(assembler *assembler, char **line_ref);
 
-/* TODO: Should be in step_one? */
-/* Translate the current image_line of the current statement in step_one and append the addresses to the file */
-errorCode append_line(step_one *step_one);
+void write_address(assembler *assembler, long address_index, word value);
 
 #endif

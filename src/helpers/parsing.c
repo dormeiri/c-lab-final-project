@@ -8,7 +8,7 @@ Guidelines:
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "symbols.h"
+#include "../symbols.h"
 #include "validations.h"
 #include "parsing.h"
 
@@ -57,7 +57,7 @@ errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 {
     /* TODO: Break down to smaller funcitons, try to remove duplicates */
 
-    char *args_str = step_one->curr_statement->statement->args;
+    char *args_str = step_one->curr_statement->args;
     IGNORE_WHITE_SPACES(args_str);
     symbol = &args_str;
     for(;!(IS_EMPTY_STR(args_str) || IS_WHITESPACE(*args_str) || *args_str == MACRO_SET_CHAR); args_str++);
@@ -144,7 +144,7 @@ errorCode get_next_arg(step_one *step_one, address *address_ref)
         exit(EXIT_FAILURE);
     }
 
-    TRY_THROW(strtok_wrapper(step_one->curr_statement->args, &token));
+    TRY_THROW(strtok_wrapper(step_one, &token));
     step_one->curr_statement->args = NULL;
     address_ref->symbol_name = NULL;
 
@@ -287,9 +287,11 @@ errorCode strtok_wrapper(step_one *step_one, char **token_ref)
 errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
 {
     char *end_str;  /* The pointer to the string after the parsed number */
+    symbol *sym;
 
     /* If the token is macro then take the value from the token, otherwise parse the token string to number */
-    if(!find_macro(step_one, token, num_ref))
+    sym = find_symbol(step_one->assembler->symbols_table, token);
+    if(!(sym && sym->property == MACRO_SYM))
     {
         *num_ref = strtol(token, &end_str, 10);
 

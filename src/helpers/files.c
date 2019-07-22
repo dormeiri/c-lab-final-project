@@ -1,5 +1,4 @@
 #include "files.h"
-#include "converts.h"
 #include "../commons.h"
 #include <string.h>
 #include <stdlib.h>
@@ -55,6 +54,9 @@ Return:         If error occured, error code, otherwise, OK
  */
 static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
 
+/* Converts word to special base 4 */
+static char *convert_to_base4(word value);
+
 /****************/
 /*    Public    */
 /****************/
@@ -68,26 +70,11 @@ void frecopy_temp_to_obj(assembler *assembler)
     fclose(temp_fp);
 }
 
-errorCode append_line(step_one *step_one)
-{
-    #define APPEND_ADDRESS(VALUE) fprintf(step_one->assembler->output_fp, "%d\t%s\n", step_one->address_index++, convert_to_base4(VALUE))
-
-    statement *statement = step_one->curr_statement;
-    address *curr_address;
-    if(step_one->curr_statement->operation_type != NONE)
-    {
-        APPEND_ADDRESS(convert_operation_first_line(statement->operation_type, statement->image_line));
-    }
-
-    while(curr_address = dequeue(statement->image_line->addresses))
-    {
-        APPEND_ADDRESS(convert_to_base4(curr_address->value));
-    }
-}
 
 errorCode set_input_file(assembler *assembler)
 {
     TRY_THROW(get_input_file(get_filename(assembler->name, INPUT_EXT), &assembler->input_fp));
+    return OK;
 }
 
 errorCode set_output_file(assembler *assembler, outputFileType type)
@@ -120,16 +107,18 @@ errorCode set_output_file(assembler *assembler, outputFileType type)
             break;
     }
 
-    TRY_THROW(get_output_file(filename, &assembler->output_fp));
+    return get_output_file(filename, &assembler->output_fp);
 }
 errorCode read_line(assembler *assembler, char **line_ref)
 {
-    fgets_wrapper(assembler->input_fp, line_ref);
+    return fgets_wrapper(assembler->input_fp, line_ref);
 }
 
-errorCode append_line(assembler *assembler, image_line *line)
+void write_address(assembler *assembler, long address_index, word value)
 {
+    fprintf(assembler->output_fp, "%ld\t%s\n", address_index, convert_to_base4(value));
 }
+
 
 /******************/
 /*    Privates    */
@@ -171,7 +160,7 @@ errorCode get_output_file(char *filename, FILE **fp_ref)
 
 errorCode fgets_wrapper(FILE *fp, char **line_ref)
 {
-    char *buffer = (char *)malloc(MAX_STRING_LEN * sizeof(char));
+    static char buffer[MAX_STRING_LEN];
     size_t line_len;
 
     if(fgets(buffer, LINE_BUFFER_LEN, fp) == NULL)
@@ -232,4 +221,34 @@ char *get_filename(const char *name, const char *extention)
 
     strcpy(filename, name);
     strcat(filename, extention);
+
+    return filename;
+}
+
+char *convert_to_base4(word value)
+{
+    char *result;
+    word mask; /* 11 in binary */
+    int i;
+
+    result = (char *)malloc(sizeof(word) * sizeof(char));
+    for(mask = 3, i = 0; mask; mask <<= 2, i++)
+    {
+        switch ((value & mask) >> (i * 2))
+        {
+            case 0:
+                *(result + i) = '*';
+                break;
+            case 1:
+                *(result + i) = '#';
+                break;
+            case 2:
+                *(result + i) = '%';
+                break;
+            case 3:
+                *(result + i) = '!';
+                break;
+        }
+    }
+    return result;
 }

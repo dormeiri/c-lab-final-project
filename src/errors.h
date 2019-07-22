@@ -93,8 +93,8 @@ typedef struct error
 {
     errorCode   code;       /* Error code of the error */
     int         line_num;   /* Line number where the error occured */
-    char        *filename;  /* The name of file where the error occured */
-    char        *line_str;  /* The line string which caused the error */
+    const char  *filename;  /* The name of file where the error occured */
+    const char  *line_str;  /* The line string which caused the error */
 } error;
 
 void create_error(errorCode code, int line_num, const char *filename, const char *line_str);

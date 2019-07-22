@@ -15,39 +15,53 @@ int main(int argc, char **argv)
     {
         create_error(INVALID_CL, -1, NULL, NULL);
     }
-    while(*(++argv) && run_assembler(*argv));
+    else
+    {
+        while(*(++argv) && run_assembler(*argv));
+    }
     return EXIT_SUCCESS;
 }
 
 boolean run_assembler(const char *filename)
 {
-    assembler *curr_assembler;
-    create_assembler(filename, &curr_assembler);
+    assembler *curr_assembler = NULL;
+
+    printf("Compiling %s\n", filename);
+
+    create_assembler(filename, curr_assembler);
     run_step_one(curr_assembler);
     if(curr_assembler->succeed)
     {
         /* TODO: run_step_two(curr_assembler); */
     }
+    
     if(curr_assembler->succeed)
     {
         frecopy_temp_to_obj(curr_assembler);
-        printf("%s compiled succeessfuly", filename);
+        printf("%s compiled succeessfuly\n", filename);
     }
     else
     {
-        printf("Error occured while compiling %s", filename);
+        printf("Error occured while compiling %s\n", filename);
     }
     
     free_assembler(curr_assembler);
+    return curr_assembler->succeed;
 }
 
 errorCode create_assembler(const char *name, assembler *out)
 {
-    out = (assembler *)malloc(sizeof(assembler));
+    if(!(out = (assembler *)malloc(sizeof(assembler))))
+    {
+        exit(EXIT_FAILURE);
+    }
+    out->succeed = TRUE;
     out->name = name;
+    out->symbols_table = (symbols_table *)malloc(sizeof(symbols_table));
+
     TRY_THROW(set_input_file(out));
     TRY_THROW(set_output_file(out, TEMP_OBJECT_FILE));
-    out->symbol_table = initilize_queue(sizeof(symbol));
+    printf("Temp file created\n");
 
     return OK;
 }
@@ -56,5 +70,5 @@ void free_assembler(assembler *assembler)
 {
     fclose(assembler->input_fp);
     fclose(assembler->output_fp);
-    free_queue(assembler->symbol_table);
+    free(assembler->symbols_table);
 }
