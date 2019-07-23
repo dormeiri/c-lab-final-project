@@ -24,7 +24,7 @@
 void flush_error(error *error_ref);
 static char *error_code_msg(errorCode code);
 
-void create_error(errorCode code, int line_num, const char *filename, const char *line_str)
+void create_error(errorCode code, int line_num, const char *asm_name, const char *line_str)
 {
     error *err;
     if(!(err = (error *)malloc(sizeof(error))))
@@ -33,7 +33,7 @@ void create_error(errorCode code, int line_num, const char *filename, const char
     }
     err->code = code;
     err->line_num = line_num;
-    err->filename = filename;
+    err->filename = asm_name;
     err->line_str = line_str;
     flush_error(err);
 }
@@ -59,6 +59,7 @@ void flush_error(error *error_ref)
 
 char *error_code_msg(errorCode code)
 {
+    /*TODO: TBD, maybe change to simple switch case? */
     static char *error_msgs[] = 
     {
         "Not int",
@@ -82,7 +83,8 @@ char *error_code_msg(errorCode code)
         "Macro statement cannot be labaled",
         "Invalid macro statement",
         "Symbol already exists",
-        "Too many operands"
+        "Too many operands",
+        "Not declared"
         /* TODO: Complete and make sure */
     };
 

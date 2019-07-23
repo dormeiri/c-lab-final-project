@@ -7,28 +7,24 @@
 
 #define NUM_OF_REGISTERS 8
 #define WORD_SIZE 14
-/* 2^14 */
+/* 2^WORD_SIZE / 2 - 1 */
 #define MAX_NUM 8191
+/* 2^WORD_SIZE / 2 */
 #define MIN_NUM -8192
 
-/* typedef struct word
-{
-    int value:WORD_SIZE;
-} word; */
 typedef int word;
-
-typedef struct
-{
-    word are : 2;
-    word address_dest : 2;
-    word address_src : 2;
-    word op_code: 4;
-} operation_word;
 
 typedef union
 {
     word raw;
-    operation_word op_word;
+
+    struct
+    {
+        word are : 2;
+        word address_dest : 2;
+        word address_src : 2;
+        word op_code: 4;
+    } op_word;
 } word_converter;
 
 typedef enum
@@ -83,10 +79,15 @@ typedef enum
     DATA = -1            /* Not in use in operation word so it does not matter what its value */
 } addressingType;
 
+/*******************/
+/* Symbols defines */
+/*******************/
+
 #define SYMBOL_HASHSIZE 100 /* This is the number of available hashes, this is not the limit of the hashset size */
 
 typedef enum 
 {
+    UNKNOWN_SYM = -1,
     MACRO_SYM,
     DATA_SYM,
     CODE_SYM,
@@ -94,12 +95,20 @@ typedef enum
     ENTRY_SYM
 } symbolProperty;
 
+typedef struct
+{
+    long address_index;
+    long file_pos;
+    long line_num;
+    char *line_str;
+} symbol_usage;
+
 typedef struct 
 {
     const char *symbol_name;
     symbolProperty property;
     word value;
-    queue *addresses;
+    queue *usages;
 } symbol;
 
 typedef struct symbol_list
@@ -110,13 +119,18 @@ typedef struct symbol_list
 
 typedef symbol_list *symbols_table[SYMBOL_HASHSIZE];
 
+/*************/
+/* Assembler */
+/*************/
+
 typedef struct
 {
-    const char *name;         /* The name of the assembler program as received from argv (withouth extention) */
+    const char *name;               /* The name of the assembler program as received from argv (withouth extention) */
     FILE *input_fp;
-    FILE *output_fp;    /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
+    FILE *output_fp;                /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
     symbols_table *symbols_table;
     boolean succeed;
 } assembler;
+
 
 #endif

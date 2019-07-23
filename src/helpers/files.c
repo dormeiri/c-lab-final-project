@@ -61,23 +61,29 @@ static char *convert_to_base4(word value);
 /*    Public    */
 /****************/
 
+void update_symbol_usage(assembler *assembler, symbol *symbol, symbol_usage *sym_usage)
+{
+    fseek(assembler->output_fp, sym_usage->file_pos, SEEK_SET);
+    write_address(assembler, sym_usage->address_index, symbol->value);
+}
+
 void frecopy_temp_to_obj(assembler *assembler)
 {
-    FILE *temp_fp = assembler->output_fp;
-    set_output_file(assembler, OBJECT_FILE);
+    FILE *fp = NULL;
 
-    copy_file(temp_fp, assembler->output_fp);
-    fclose(temp_fp);
+    get_output(assembler, OBJECT_FILE, &fp);
+    copy_file(assembler->output_fp, fp);
+    fclose(fp);
+    fclose(assembler->output_fp);
 }
 
 
-errorCode set_input_file(assembler *assembler)
+errorCode get_input(assembler *assembler, FILE **out)
 {
-    TRY_THROW(get_input_file(get_filename(assembler->name, INPUT_EXT), &assembler->input_fp));
-    return OK;
+    return get_input_file(get_filename(assembler->name, INPUT_EXT), out);
 }
 
-errorCode set_output_file(assembler *assembler, outputFileType type)
+errorCode get_output(assembler *assembler, outputFileType type, FILE **out)
 {
     char *filename;
     switch (type)
@@ -95,10 +101,10 @@ errorCode set_output_file(assembler *assembler, outputFileType type)
             break;
 
         case TEMP_OBJECT_FILE:
-            assembler->output_fp = tmpfile();
-            if(assembler->output_fp == NULL)
+            *out = tmpfile();
+            if(out == NULL)
             {
-                exit(EXIT_FAILURE); /* it is not error for user, shuold be treated like malloc fail */
+                exit(EXIT_FAILURE);
             }
             return OK;
         
@@ -107,7 +113,7 @@ errorCode set_output_file(assembler *assembler, outputFileType type)
             break;
     }
 
-    return get_output_file(filename, &assembler->output_fp);
+    return get_output_file(filename, out);
 }
 errorCode read_line(assembler *assembler, char **line_ref)
 {
@@ -116,7 +122,6 @@ errorCode read_line(assembler *assembler, char **line_ref)
 
 void write_address(assembler *assembler, long address_index, word value)
 {
-    printf("%ld\t%d\n", address_index, value); /* TODO: REMOVE */
     fprintf(assembler->output_fp, "%ld\t%s\n", address_index, convert_to_base4(value));
 }
 

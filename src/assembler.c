@@ -4,6 +4,8 @@
 #include "assembler.h"
 #include "helpers/parsing.h"
 #include "helpers/files.h"
+#include "step_one.h"
+#include "step_two.h"
 
 boolean run_assembler(const char *filename);
 void free_assembler(assembler *assembler);
@@ -36,9 +38,10 @@ boolean run_assembler(const char *filename)
     }
     
     run_step_one(curr_assembler);
+    printf("Finished step one\n");
     if(curr_assembler->succeed)
     {
-        /* TODO: run_step_two(curr_assembler); */
+        run_step_two(curr_assembler);
     }
     
     if(curr_assembler->succeed)
@@ -68,8 +71,8 @@ errorCode create_assembler(const char *name, assembler **out)
         exit(EXIT_FAILURE);
     }
 
-    TRY_THROW(set_input_file(*out));
-    TRY_THROW(set_output_file(*out, TEMP_OBJECT_FILE));
+    TRY_THROW(get_input(*out, &(*out)->input_fp));
+    TRY_THROW(get_output(*out, TEMP_OBJECT_FILE, &(*out)->output_fp));
 
     return OK;
 }

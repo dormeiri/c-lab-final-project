@@ -1,0 +1,324 @@
+#include <string.h>
+#include "step_one.h"
+#include "symbols.h"
+#include "helpers/files.h"
+#include "helpers/parsing.h"
+
+/* TODO: Organize, maybe split into smaller c files */
+
+static char operation_operands(operationType op_type);
+static errorCode append_image_lines(step_one *step_one);
+static void free_step_one_objs();
+static statement *create_statement();
+static step_one *create_step_one(assembler *assembler);
+static symbolProperty get_symbol_property(statement *statement);
+static boolean step_one_line_algo(step_one *step_one);
+static errorCode enqueue_string_address(step_one *step_one, const char *str);
+static errorCode enqueue_address(step_one *step_one);
+static void create_step_one_error(step_one *step_one, errorCode errorCode);
+/* Translate the current image_line of the current statement in step_one and append the addresses to the file */
+static errorCode append_line(step_one *step_one);
+static errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line);
+
+void run_step_one(assembler *assembler)
+{
+    step_one *step_one;
+    step_one = create_step_one(assembler);
+
+    while(read_line(assembler, &step_one->curr_line) == OK)
+    {
+        if(!step_one_line_algo(step_one))
+        {
+            assembler->succeed = FALSE;
+        }
+        step_one->line_counter++;
+        free_step_one_objs(step_one);
+    }
+    fclose(assembler->input_fp);
+    free(step_one);
+}
+
+boolean step_one_line_algo(step_one *step_one)
+{
+#define TRY_THROW_S1(FUNC) {\
+    errorCode RES;\
+    if((RES = FUNC) != OK)\
+    {\
+        create_step_one_error(step_one, RES);\
+        return FALSE;\
+    }\
+}
+
+    errorCode res;
+    char *temp_str;
+    word temp_value;
+
+    temp_str = (char *)malloc(MAX_STRING_LEN * sizeof(char));
+    step_one->curr_line_copy = strncpy(temp_str, step_one->curr_line, MAX_STRING_LEN);
+
+    step_one->curr_statement = create_statement();
+    TRY_THROW_S1(map_statement(step_one));
+
+    if(step_one->curr_statement->tag)
+    {
+        temp_str = step_one->curr_statement->tag;
+        temp_value = step_one->address_index;
+        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value));
+    }
+
+    switch (step_one->curr_statement->statement_type)
+    {
+        case MACRO_KEY:
+            TRY_THROW_S1(step_one->curr_statement->tag ? INVALID_COMB_LABEL_MACRO : OK);
+            TRY_THROW_S1(parse_macro_statement(step_one, &temp_str, &temp_value));
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value));
+            return TRUE;
+
+        case EXTERN_KEY:
+            get_label_arg(step_one, &temp_str);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0));
+            break;
+
+        /* TODO: TBD */
+        case ENTRY_KEY:
+            get_label_arg(step_one, &temp_str);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, ENTRY_SYM, 0));
+
+        case OPERATION_KEY:
+        case DATA_KEY:
+            
+            while((res = enqueue_address(step_one)) == OK);
+            TRY_THROW_S1(res == MISSING_PARAM ? OK : res);
+            TRY_THROW_S1(append_line(step_one));
+            break;
+
+        case STRING_KEY:
+            {
+                char *str;
+                TRY_THROW_S1(get_string_arg(step_one, &str));
+                enqueue_string_address(step_one, str);
+                TRY_THROW_S1(append_line(step_one));
+            }
+            break;
+
+        default:
+            return TRUE;
+            break;
+    }
+    return TRUE;
+}
+
+errorCode enqueue_address(step_one *step_one)
+{
+    errorCode res;
+    address *curr_address;
+    if((res = get_next_arg(step_one, &curr_address)) == OK)
+    {        
+        enqueue(step_one->curr_statement->image_line->addresses, curr_address);
+    }
+    return res;
+}
+
+errorCode enqueue_string_address(step_one *step_one, const char *str)
+{
+    address *temp_address;
+    for(; *str; str++)
+    {
+        temp_address = (address *)malloc(sizeof(temp_address));
+        temp_address->value = *str;
+        temp_address->type = INSTANT;
+        enqueue(step_one->curr_statement->image_line->addresses, temp_address);
+    }
+    return OK;
+}
+
+
+void create_step_one_error(step_one *step_one, errorCode errorCode)
+{
+    create_error(errorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy);
+}
+
+symbolProperty get_symbol_property(statement *statement)
+{
+    switch (statement->statement_type)
+    {
+        case MACRO_KEY: return MACRO_SYM;
+        case OPERATION_KEY: return CODE_SYM;
+        default: return DATA;
+    }
+}
+
+void step_one_add_symbol_usage(step_one *step_one, address *address)
+{
+    if(address->symbol_name)
+    {
+        symbols_table *tab = step_one->assembler->symbols_table;
+        long pos = ftell(step_one->assembler->output_fp);
+        long linen = step_one->line_counter;
+        const char *lines = step_one->curr_line_copy;
+        long adrs_i = step_one->address_index;
+        add_symbol_usage(tab, address->symbol_name, pos, linen, lines, adrs_i);
+    }
+}
+
+
+errorCode append_line(step_one *step_one)
+{
+    statement *statement;
+    statement = step_one->curr_statement;
+    if(step_one->curr_statement->operation_type != NONE_OP)
+    {
+        return append_operation(step_one, statement->operation_type, statement->image_line);
+    }
+    else
+    {
+        append_image_lines(step_one);
+    }
+    
+    return OK;
+}
+
+
+errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line)
+{
+    word_converter w;
+    queue_node *nptr;
+    char num_of_operands;
+
+    w.raw = 0;
+    nptr = image_line->addresses->head;
+    num_of_operands = operation_operands(operation_type);
+    w.op_word.are = A_ARE; /* TODO: Implement */
+    w.op_word.op_code = operation_type;
+
+    if(num_of_operands > 0)
+    {
+        TRY_THROW((nptr) ? OK : MISSING_PARAM);
+        w.op_word.address_src = ((address *)(nptr->data))->type;
+
+        if(num_of_operands > 1)
+        {
+            TRY_THROW((nptr = nptr->next) ? OK : MISSING_PARAM);
+            w.op_word.address_dest = ((address *)(nptr->data))->type;
+        }
+    }
+    if(nptr && nptr->next) 
+    {
+        return TOO_MANY_OPERANDS;
+    }
+
+    write_address(step_one->assembler, step_one->address_index++, w.raw);
+    append_image_lines(step_one);
+
+    return OK;
+}
+
+errorCode append_image_lines(step_one *step_one)
+{
+    address *curr_address;
+    while((curr_address = dequeue(step_one->curr_statement->image_line->addresses)))
+    {
+        if(curr_address->symbol_name)
+        {
+            step_one_add_symbol_usage(step_one, curr_address);
+        }
+
+        write_address(step_one->assembler, step_one->address_index++, curr_address->value);
+    }
+    return OK;
+}
+
+char operation_operands(operationType op_type)
+{
+    switch (op_type)
+    {
+        case MOV_OP:
+        case CMP_OP:
+        case ADD_OP:
+        case SUB_OP:
+        case LEA_OP: return 2;
+
+        case NOT_OP:
+        case CLR_OP:
+        case INC_OP:
+        case DEC_OP:
+        case JMP_OP:
+        case BNE_OP:
+        case RED_OP:
+        case PRN_OP:
+        case JSR_OP: return 1;
+
+        case RTS_OP:
+        case STOP_OP: return 0;
+
+        default: return -1; /* It should not get here */
+    }
+}
+
+step_one *create_step_one(assembler *assembler)
+{
+    step_one *result;
+
+    result = (step_one *)malloc(sizeof(step_one));
+    if(!result)
+    {
+        exit(EXIT_FAILURE);
+    }
+    
+    if(!(result->curr_line = (char *)malloc(sizeof(char) * MAX_STRING_LEN)))
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    result->assembler = assembler;
+    result->line_counter = 1;
+    result->address_index = 100;
+
+    return result;
+}
+
+statement *create_statement()
+{
+    statement *result;
+
+    if(!(result = (statement *)malloc(sizeof(statement))))
+    {
+        exit(EXIT_FAILURE);
+    }
+    if(!(result->image_line = (image_line *)malloc(sizeof(image_line))))
+    {
+        exit(EXIT_FAILURE);
+    }
+    result->image_line->addresses = initilize_queue(sizeof(address));
+
+    return result;
+}
+
+void free_step_one_objs(step_one *step_one)
+{
+    /* args and tag is taken from curr_line, and curr_line is pointing to static buffer in fgets_wrapper, therefore, there is no need of freeing */
+
+    if(step_one)
+    {
+        if(step_one->curr_statement)
+        {
+            if(step_one->curr_statement->image_line)
+            {
+                if(step_one->curr_statement->image_line->addresses)
+                {
+                    free_queue(step_one->curr_statement->image_line->addresses);
+                    free(step_one->curr_statement->image_line->addresses);
+                }
+
+                free(step_one->curr_statement->image_line);
+            }
+
+            free(step_one->curr_statement);
+        }
+        
+        if(step_one->curr_line_copy)
+        {
+            free(step_one->curr_line_copy);
+        }
+    }
+}

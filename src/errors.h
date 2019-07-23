@@ -89,7 +89,10 @@ typedef enum errorCode
     SYMBOL_ALREADY_EXIST = 20,
 
     /* Has more operands than expected */
-    TOO_MANY_OPERANDS = 21
+    TOO_MANY_OPERANDS = 21,
+
+    /* Symbol not declared */
+    NOT_DECLARED = 22
 } errorCode;
 
 typedef struct error
@@ -100,6 +103,6 @@ typedef struct error
     const char  *line_str;  /* The line string which caused the error */
 } error;
 
-void create_error(errorCode code, int line_num, const char *filename, const char *line_str);
+void create_error(errorCode code, int line_num, const char *asm_name, const char *line_str);
 
 #endif
