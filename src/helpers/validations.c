@@ -45,7 +45,7 @@ errorCode postparsing_validations()
 /* Check for white spaces in a cleaned token */
 errorCode check_cleaned_token(char *token)
 {
-    for(; IS_EMPTY_STR(token) == FALSE; token++)
+    for(; !IS_EMPTY_STR(token); token++)
     {
         if(IS_WHITESPACE(*token))
         {

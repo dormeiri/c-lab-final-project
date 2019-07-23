@@ -12,6 +12,7 @@ Guidelines:
 #include "validations.h"
 #include "parsing.h"
 
+#define COMMENT_CHAR '#'
 #define MACRO_SET_CHAR '='
 #define QUOTE_CHAR '"'
 #define INSTANT_CHAR '#'
@@ -20,6 +21,7 @@ Guidelines:
 #define TAG_END ':'
 #define REGISTER_CHAR 'r'
 #define REGISTER_INDEX(STR) (STR[1] - '0')
+#define IS_COMMENT(STR) (*STR == COMMENT_CHAR)
 #define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0]) || STR[0] == '-' || STR[0] == '+')
 #define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
 #define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && STR[2] == '\0')
@@ -30,18 +32,16 @@ Guidelines:
 
 /* Read statment first word into DEST */
 #define READ_FIRST_WORD(STR, DEST) \
-    IGNORE_WHITE_SPACES(STR);\
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR) || *STR == TAG_END) == FALSE; STR++)
 
 /* Read statement second word into DEST */
 #define READ_SECOND_WORD(STR, DEST) \
-    IGNORE_WHITE_SPACES(STR);\
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
 static errorCode tok_to_num(step_one *step_one, char *token, word *num_ref);
-static errorCode tok_to_array(step_one *step_one, char *token, address *address_ref);
+static errorCode tok_to_array(step_one *step_one, char *token, address *out);
 static errorCode strtok_wrapper(step_one *step_one, char **tokenp);
 static errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
 static errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
@@ -94,19 +94,32 @@ errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 errorCode map_statement(step_one *step_one)
 {   
     char *statement_key;
-    statement *statement_ref = step_one->curr_statement;
+    statement *statement = step_one->curr_statement;
     char *statement_line = step_one->curr_line;
 
-    READ_FIRST_WORD(statement_line, statement_ref->tag);
+    IGNORE_WHITE_SPACES(statement_line);
+    if(IS_COMMENT(statement_line))
+    {
+        statement->statement_type = COMMENT_KEY;
+        return OK;
+    }
+    if(IS_EMPTY_STR(statement_line))
+    {
+        statement->statement_type = EMPTY_KEY;
+        return OK;
+    }
+
+    READ_FIRST_WORD(statement_line, statement->tag);
     if(*statement_line == TAG_END)
     {
         SPLIT_STR(statement_line);
+        IGNORE_WHITE_SPACES(statement_line);
         READ_SECOND_WORD(statement_line, statement_key);
     }
     else
     {
-        statement_key = statement_ref->tag;
-        statement_ref->tag = NULL;
+        statement_key = statement->tag;
+        statement->tag = NULL;
     }
     
     if(IS_EMPTY_STR(statement_line) == FALSE)
@@ -114,9 +127,9 @@ errorCode map_statement(step_one *step_one)
         SPLIT_STR(statement_line);
         IGNORE_WHITE_SPACES(statement_line);
     }
-    statement_ref->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
+    statement->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
 
-    TRY_THROW(map_statement_key(statement_key, statement_ref));
+    TRY_THROW(map_statement_key(statement_key, statement));
     return OK;
 }
 
@@ -137,51 +150,54 @@ void clean_token(char **token_ref)
     }
 }
 
-errorCode get_next_arg(step_one *step_one, address **address_ref)
+errorCode get_next_arg(step_one *step_one, address **out)
 {
     char *token;
-    *address_ref = (address *)malloc(sizeof(address_ref));
-    if(address_ref == NULL)
+    *out = (address *)malloc(sizeof(out));
+    (*out)->symbol_name = NULL;
+    (*out)->value = 0;
+
+    if(out == NULL)
     {
         exit(EXIT_FAILURE);
     }
 
     TRY_THROW(strtok_wrapper(step_one, &token));
     step_one->curr_statement->args = NULL;
-    (*address_ref)->symbol_name = NULL;
+    (*out)->symbol_name = NULL;
 
     if(IS_NUM_FIRST_CHAR(token))
     {
-        TRY_THROW(tok_to_num(step_one, token, &(*address_ref)->value));
-        (*address_ref)->type = DATA;
+        TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
+        (*out)->type = DATA;
     }
     else if(token[0] == INSTANT_CHAR)
     {
         token++;
-        TRY_THROW(tok_to_num(step_one, token, &(*address_ref)->value));
-        (*address_ref)->type = INSTANT;
+        TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
+        (*out)->type = INSTANT;
     }
     else if(IS_VALID_REGISTER(token))
     {
-        (*address_ref)->value = REGISTER_INDEX(token);
-        (*address_ref)->type = REGISTER;
+        (*out)->value = REGISTER_INDEX(token);
+        (*out)->type = REGISTER;
     }
     else if(IS_ARRAY(token))
     {
-        TRY_THROW(tok_to_array(step_one, token, (*address_ref)));
+        TRY_THROW(tok_to_array(step_one, token, (*out)));
     }
     else if(is_valid_tag(token))
     {
         symbol *sym;
         if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property == MACRO_SYM)
         {
-            (*address_ref)->value = sym->value;
-            (*address_ref)->type = DATA;
+            (*out)->value = sym->value;
+            (*out)->type = DATA;
         }
         else
         {
-            (*address_ref)->symbol_name = token;
-            (*address_ref)->type = DIRECT;
+            (*out)->symbol_name = token;
+            (*out)->type = DIRECT;
         }
     }
     else
@@ -241,7 +257,7 @@ errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
             return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
         }
         statement_ref->statement_type = translator_arr[i].type;
-        statement_ref->operation_type = NONE;
+        statement_ref->operation_type = NONE_OP;
     }
     else
     {
@@ -256,11 +272,22 @@ errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 {
     static translator translator_arr[] = 
     {
-        {"mov", MOV},
-        {"jmp", JMP},
-        {"add", ADD},
-        {"sub", SUB},
-        {NULL, 0}
+        {"mov", MOV_OP},
+        {"add", ADD_OP},
+        {"sub", SUB_OP},
+        {"not", NOT_OP},
+        {"clr", CLR_OP},
+        {"lea", LEA_OP},
+        {"inc", INC_OP},
+        {"dec", DEC_OP},
+        {"jmp", JMP_OP},
+        {"bne", BNE_OP},
+        {"red", RED_OP},
+        {"prn", PRN_OP},
+        {"jsr", JSR_OP},
+        {"rts", RTS_OP},
+        {"stop", STOP_OP},
+        {NULL, NONE_OP}
     };
     unsigned char i;
 
@@ -323,7 +350,12 @@ errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
     address_ref->type = ARRAY;
 
     /* Set symbol name of the array */    
-    address_ref->symbol_name = token;
+    if(!(address_ref->symbol_name = (char *)malloc(sizeof(char) * (strlen(token) + 1))))
+    {
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(address_ref->symbol_name, token);
     for(; *token != INDEX_START && !IS_EMPTY_STR(token); token++);
     TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
     SPLIT_STR(token);

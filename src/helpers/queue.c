@@ -13,7 +13,12 @@ queue *initilize_queue(size_t data_size)
 
 void free_queue(queue *queue)
 {
-    while(dequeue(queue));
+    queue_node *temp;
+    while((temp = queue->head))
+    {
+        queue->head = queue->head->next;
+        free(temp);
+    }
 }
 
 void enqueue(queue *queue, void *value_ref)

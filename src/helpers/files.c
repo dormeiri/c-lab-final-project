@@ -155,6 +155,14 @@ errorCode fgets_wrapper(FILE *fp, char **line_ref)
 {
     static char buffer[MAX_STRING_LEN];
     size_t line_len;
+    int i = 0;
+
+    /* Delete the last string completly to prevent parsing issues */
+    /* TODO: Maybe try to do without this and see what happens */
+    for(; i < MAX_STRING_LEN; i++)
+    {
+        buffer[i] = '\0';
+    }
 
     if(!fgets(buffer, LINE_BUFFER_LEN, fp))
     {
@@ -170,7 +178,6 @@ errorCode fgets_wrapper(FILE *fp, char **line_ref)
     {
         return BUF_LEN_EXCEEDED;
     }
-    
     *line_ref = buffer;
     return OK;
 }

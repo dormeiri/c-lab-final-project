@@ -45,7 +45,8 @@ Parameters:
 */
 void clean_token(char **token_ref);
 
-errorCode get_next_arg(step_one *step_one, address **address_ref);
+/* get the next argument of the line, address out is initialized inside the function */
+errorCode get_next_arg(step_one *step_one, address **out);
 errorCode get_string_arg(step_one *step_one, char **str_ref);
 
 /* not yet implemented, used to get the label in the argument of entry and extern instructions*/

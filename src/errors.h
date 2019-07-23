@@ -86,7 +86,10 @@ typedef enum errorCode
     INVALID_MACRO_STATEMENT = 19,
 
     /* Symbol name declared twice */
-    SYMBOL_ALREADY_EXIST = 20
+    SYMBOL_ALREADY_EXIST = 20,
+
+    /* Has more operands than expected */
+    TOO_MANY_OPERANDS = 21
 } errorCode;
 
 typedef struct error
