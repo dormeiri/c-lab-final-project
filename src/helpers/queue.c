@@ -30,13 +30,6 @@ void enqueue(queue *queue, void *value_ref)
         exit(EXIT_FAILURE);
     }
 
-    /* Allocate memory for the new node's data (generic type) */
-    new_node->data = malloc(queue->data_size);
-    if(new_node->data == NULL)
-    {
-        exit(EXIT_FAILURE);
-    }
-
     new_node->data = value_ref;
 
     /* Add the new node to the queue */
