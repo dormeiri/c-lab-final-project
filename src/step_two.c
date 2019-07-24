@@ -29,22 +29,22 @@ static void append_externals(assembler *assembler, queue *externals)
         if(!IS_EMPTY_QUEUE(externals))
         {
             get_output(assembler, EXTERN_FILE, &fp);
-            while((curr_sym = (symbol *)dequeue(externals)))
+            curr_sym = (symbol *)dequeue(externals);
+            while((curr_sym))
             {
                 while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
                 {
                     fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
                 }
+                puts("1");
+                getchar();
+                curr_sym = (symbol *)dequeue(externals);
+                puts("2");
+                getchar();
             }
         }
-        puts("2");
-        getchar();
     }
-    puts("3");
-    getchar();
     fclose(fp);
-    puts("4");
-    getchar();
 }
 
 static void update_addresses(assembler *assembler, symbol *sym)
@@ -74,8 +74,6 @@ static void create_error_step_two(assembler *assembler, symbol *sym)
 
 void run_step_two(assembler *assembler)
 {
-    /* TODO: Create error functions */
-
     symbol *curr_sym;
     queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
     queue *externals;   /* The same as entries queue but for externals */

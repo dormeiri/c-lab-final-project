@@ -31,17 +31,16 @@ void enqueue(queue *queue, void *value_ref)
     }
 
     new_node->data = value_ref;
+    new_node->next = NULL;
 
     /* Add the new node to the queue */
     if(IS_EMPTY_QUEUE(queue))
     {
-        queue->tail = new_node;
-        queue->head = queue->tail;
+        queue->head = queue->tail = new_node;
     }
     else
     {
-        queue->tail->next = new_node;
-        queue->tail = new_node;
+        queue->tail = queue->tail->next = new_node;
     }
 }
 
@@ -55,7 +54,7 @@ void *dequeue(queue *queue)
         return NULL;
     }
 
-    if((value_ref = malloc(queue->data_size)) == NULL)
+    if(!(value_ref = malloc(queue->data_size)))
     {
         exit(EXIT_FAILURE);
     }
@@ -64,17 +63,17 @@ void *dequeue(queue *queue)
     /* Copy the data from the node to local variable because we are going to free the node */
     memcpy(value_ref, queue->head->data, queue->data_size);
 
-    if(queue->head->next)
+    queue->head = queue->head->next;
+    if(!queue->head)
     {
-        queue->head = removed_node->next;
-    }
-    else
-    {
-        queue->head = NULL;
         queue->tail = NULL;
     }
 
+    printf("%lu %lu\n", value_ref, removed_node);
+    getchar();
     free(removed_node);
+    printf("%lu %lu\n", value_ref, removed_node);
+    getchar();
 
     return value_ref;
 }
