@@ -41,7 +41,7 @@ boolean run_assembler(const char *filename)
     printf("Finished step one\n");
     if(curr_assembler->succeed)
     {
-        run_step_two(curr_assembler);
+        step_two_run(curr_assembler);
     }
     
     if(curr_assembler->succeed)

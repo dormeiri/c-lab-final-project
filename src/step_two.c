@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "step_two.h"
 #include "helpers/files.h"
 #include "symbols.h"
@@ -8,14 +9,23 @@
 static void append_entries(assembler *assembler, queue *entries)
 {
     FILE *fp;
+    symbol *curr_sym;
+    symbol_usage *sym_usage;
+
+    /* TODO: Very similar to append_external, exactly the same logic but different ouput file and different queue name, should be generic*/
 
     if(assembler->succeed)
     {
-        if(!IS_EMPTY_QUEUE(entries))
+        get_output(assembler, ENTRY_FILE, &fp);
+        while((curr_sym = (symbol *)dequeue(entries)))
         {
-            get_output(assembler, ENTRY_FILE, &fp);
+            while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
+            {
+                fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
+            }
         }
     }
+    fclose(fp);
 }
 
 static void append_externals(assembler *assembler, queue *externals)
@@ -26,21 +36,12 @@ static void append_externals(assembler *assembler, queue *externals)
 
     if(assembler->succeed)
     {
-        if(!IS_EMPTY_QUEUE(externals))
+        get_output(assembler, EXTERN_FILE, &fp);
+        while((curr_sym = (symbol *)dequeue(externals)))
         {
-            get_output(assembler, EXTERN_FILE, &fp);
-            curr_sym = (symbol *)dequeue(externals);
-            while((curr_sym))
+            while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
             {
-                while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
-                {
-                    fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
-                }
-                puts("1");
-                getchar();
-                curr_sym = (symbol *)dequeue(externals);
-                puts("2");
-                getchar();
+                fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
         }
     }
@@ -72,11 +73,13 @@ static void create_error_step_two(assembler *assembler, symbol *sym)
     }
 }
 
-void run_step_two(assembler *assembler)
+void step_two_run(assembler *assembler)
 {
     symbol *curr_sym;
     queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
     queue *externals;   /* The same as entries queue but for externals */
+
+    puts("Start step two");
 
     entries = initilize_queue(sizeof(symbol));
     externals = initilize_queue(sizeof(symbol));
@@ -113,10 +116,17 @@ void run_step_two(assembler *assembler)
         }
         curr_sym = next_symbol(NULL);
     }
+
     frecopy_temp_to_obj(assembler);
-    append_entries(assembler, entries);
-    append_externals(assembler, externals);
-    free_queue(entries);
-    free_queue(externals);
+    if(!IS_EMPTY_QUEUE(entries))
+    {
+        append_entries(assembler, entries);
+        free_queue(entries);
+    }
+    if(!IS_EMPTY_QUEUE(externals))
+    {
+        append_externals(assembler, externals);
+        free_queue(externals);
+    }
     /* free_symbols_table(assembler->symbols_table); */
 }

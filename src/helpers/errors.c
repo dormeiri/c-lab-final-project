@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "helpers/errors.h"
-#include "commons.h"
+#include "errors.h"
+#include "../commons.h"
 
 #define PRINT_ERR(STREAM, ERR) {\
     fprintf(STREAM, "%s:%d: error: %s (%d)\n\tline: %s\n", ERR->filename, ERR->line_num, error_code_msg(ERR->code), ERR->code, ERR->line_str);\

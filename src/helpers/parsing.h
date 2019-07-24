@@ -2,7 +2,7 @@
 #define PARSING_HEADER
 
 #include "../commons.h"
-#include "../errors.h"
+#include "errors.h"
 #include "../step_one.h"
 
 /* Check wheter a character is white space character */

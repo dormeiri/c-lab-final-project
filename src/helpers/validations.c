@@ -1,6 +1,9 @@
 #include "validations.h"
 #include "parsing.h"
 #include "../commons.h"
+
+#include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 errorCode is_valid_tag(char *token)

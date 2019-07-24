@@ -17,7 +17,7 @@ typedef struct queue
     size_t data_size;
 } queue;
 
-#define IS_EMPTY_QUEUE(QREF) (QREF->head == NULL)
+#define IS_EMPTY_QUEUE(QREF) (!QREF || (QREF)->head == NULL)
 
 /*
 Description:    Initialize a new queue

@@ -3,7 +3,6 @@
 
 #include "assembler.h"
 
-/* TODO: Not yet implemented */
-void run_step_two(assembler *assembler);
+void step_two_run(assembler *assembler);
 
 #endif

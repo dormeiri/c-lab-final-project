@@ -4,7 +4,7 @@
 #include "helpers/files.h"
 #include "helpers/parsing.h"
 
-/* TODO: Organize, maybe split into smaller c files */
+/* TODO: Organize, maybe split into smaller files */
 
 static word get_operand_word(address *operand);
 static char operation_operands(operationType op_type);

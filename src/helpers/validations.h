@@ -1,10 +1,7 @@
 #ifndef VALIDATIONS_HEADER
 #define VALIDATIONS_HEADER
 
-#include <string.h>
-#include <stdlib.h>
-
-#include "../errors.h"
+#include "errors.h"
 
 /* 
 Description:    Does first validation of the command line string

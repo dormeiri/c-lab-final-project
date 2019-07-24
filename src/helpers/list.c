@@ -77,4 +77,5 @@ void list_free(list *l)
         l->head = l->head->next;
         free(temp);
     }
+    free(l);
 }

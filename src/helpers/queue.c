@@ -69,11 +69,7 @@ void *dequeue(queue *queue)
         queue->tail = NULL;
     }
 
-    printf("%lu %lu\n", value_ref, removed_node);
-    getchar();
     free(removed_node);
-    printf("%lu %lu\n", value_ref, removed_node);
-    getchar();
 
     return value_ref;
 }

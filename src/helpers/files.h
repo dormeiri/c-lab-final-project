@@ -2,7 +2,7 @@
 #define FILES_HEADER
 
 #include <stdio.h>
-#include "../errors.h"
+#include "errors.h"
 #include "../assembler.h"
 #include "../step_one.h"
 
