@@ -2,7 +2,7 @@
 #define ASSEMBLER_HEADER
 
 #include <stdio.h>
-#include "errors.h"
+#include "helpers/errors.h"
 #include "helpers/list.h"
 #include "helpers/queue.h"
 

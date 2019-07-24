@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include "errors.h"
+#include "helpers/errors.h"
 #include "commons.h"
 
 #define PRINT_ERR(STREAM, ERR) {\
