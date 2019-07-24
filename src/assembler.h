@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "errors.h"
+#include "helpers/list.h"
 #include "helpers/queue.h"
 
 #define NUM_OF_REGISTERS 8
@@ -12,7 +13,7 @@
 /* 2^WORD_SIZE / 2 */
 #define MIN_NUM -8192
 
-typedef int word;
+typedef unsigned int word;
 
 typedef union
 {
@@ -24,7 +25,14 @@ typedef union
         word address_dest : 2;
         word address_src : 2;
         word op_code: 4;
-    } op_word;
+    } operation_word;
+
+    struct
+    {
+        word are : 2;
+        word value : 12;
+    } operand_word;
+    
 } word_converter;
 
 typedef enum
@@ -87,12 +95,11 @@ typedef enum
 
 typedef enum 
 {
-    UNKNOWN_SYM = -1,
-    MACRO_SYM,
-    DATA_SYM,
-    CODE_SYM,
-    EXTERN_SYM,
-    ENTRY_SYM
+    UNKNOWN_SYM = 0,    /* 0000 in binary */
+    MACRO_SYM = 1,      /* 0001 in binary */
+    DATA_SYM = 2,       /* 0010 in binary */
+    CODE_SYM = 3,       /* 0011 in binary */
+    EXTERN_SYM = 4      /* 0100 in binary */
 } symbolProperty;
 
 typedef struct
@@ -102,13 +109,16 @@ typedef struct
     long line_num;
     char *line_str;
 } symbol_usage;
-
 typedef struct 
 {
     const char *symbol_name;
-    symbolProperty property;
+    struct
+    {
+        unsigned int prop : 4;
+        unsigned int ent : 1;
+    } property;
     word value;
-    queue *usages;
+    list *usages;
 } symbol;
 
 typedef struct symbol_list

@@ -145,7 +145,7 @@ void copy_file(FILE *source, FILE *dest)
 /* Do get_file with 'r' mode */
 errorCode get_input_file(char *filename, FILE **fp_ref)
 {
-    TRY_THROW(get_file(filename, "r", fp_ref));
+    TRY_THROW(get_file(filename, "r+", fp_ref));
     return OK;
 }
 

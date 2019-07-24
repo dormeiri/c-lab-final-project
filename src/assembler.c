@@ -46,7 +46,6 @@ boolean run_assembler(const char *filename)
     
     if(curr_assembler->succeed)
     {
-        frecopy_temp_to_obj(curr_assembler);
         printf("%s compiled succeessfuly\n", filename);
     }
     else

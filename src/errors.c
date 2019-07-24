@@ -84,7 +84,10 @@ char *error_code_msg(errorCode code)
         "Invalid macro statement",
         "Symbol already exists",
         "Too many operands",
-        "Not declared"
+        "Not declared",
+        "Missing array brace",
+        "Invalid array index",
+        "Entry already declared"
         /* TODO: Complete and make sure */
     };
 

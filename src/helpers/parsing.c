@@ -48,7 +48,7 @@ static errorCode map_operation_type(char *statement_key_str, statement *statemen
 
 errorCode get_label_arg(step_one *step_one, char **label)
 {
-    label = &step_one->curr_statement->args;
+    *label = step_one->curr_statement->args;
     clean_token(label);
     return is_valid_tag(*label);
 }
@@ -63,30 +63,16 @@ errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
     IGNORE_WHITE_SPACES(args_str);
     *symbol = args_str;
     for(;!(IS_EMPTY_STR(args_str) || IS_WHITESPACE(*args_str) || *args_str == MACRO_SET_CHAR); args_str++);
-    if(*args_str == MACRO_SET_CHAR)
-    {
-        SPLIT_STR(args_str);
-        clean_token(&args_str);
-        tok_to_num(step_one, args_str, value);
-    }
-    else if(IS_EMPTY_STR(args_str))
+    IGNORE_WHITE_SPACES(args_str);
+    if(*args_str != MACRO_SET_CHAR)
     {
         return INVALID_MACRO_STATEMENT;
     }
-    else /* Whitespace */
-    {
-        IGNORE_WHITE_SPACES(args_str);
-        if(*args_str == MACRO_SET_CHAR)
-        {
-            SPLIT_STR(args_str);
-            clean_token(&args_str);
-            tok_to_num(step_one, args_str, value);
-        }
-        else
-        {
-            return INVALID_MACRO_STATEMENT;
-        }
-    }
+
+    SPLIT_STR(args_str);
+    clean_token(symbol);
+    clean_token(&args_str);
+    tok_to_num(step_one, args_str, value);
 
     return OK;
 }
@@ -189,7 +175,7 @@ errorCode get_next_arg(step_one *step_one, address **out)
     else if(is_valid_tag(token))
     {
         symbol *sym;
-        if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property == MACRO_SYM)
+        if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property.prop == MACRO_SYM)
         {
             (*out)->value = sym->value;
             (*out)->type = DATA;
@@ -251,8 +237,8 @@ errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 
     if(statement_key_str[0] == '.')
     {
-        for(i = 0; strcmp(translator_arr[i].str, statement_key_str); i++);
-        if(translator_arr[i].str == NULL)
+        for(i = 0; (translator_arr[i].str) && strcmp(translator_arr[i].str, statement_key_str); i++);
+        if(!(translator_arr[i].str))
         {
             return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
         }
@@ -330,7 +316,11 @@ errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
     /* If the token is macro then take the value from the token, otherwise parse the token string to number */
     sym = find_symbol(step_one->assembler->symbols_table, token);
 
-    if(!(sym && sym->property == MACRO_SYM))
+    if((sym && sym->property.prop == MACRO_SYM))
+    {
+        *num_ref = sym->value;
+    }
+    else
     {
         *num_ref = strtol(token, &end_str, 10);
 
@@ -348,31 +338,26 @@ errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
     char *index_token; /* The string which represent the index */
 
     address_ref->type = ARRAY;
-
-    /* Set symbol name of the array */    
-    if(!(address_ref->symbol_name = (char *)malloc(sizeof(char) * (strlen(token) + 1))))
-    {
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(address_ref->symbol_name, token);
+    
+    address_ref->symbol_name = token;
     for(; *token != INDEX_START && !IS_EMPTY_STR(token); token++);
-    TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
+    TRY_THROW(IS_EMPTY_STR(token) ? MISSING_ARRAY_BRACE : OK);
     SPLIT_STR(token);
     clean_token(&address_ref->symbol_name);
     TRY_THROW(is_valid_tag(address_ref->symbol_name) ? OK : INVALID_TAG);
 
     /* Skip to first occurence of INDEX_END and validate */
     index_token = token;
-    for(; (*token != INDEX_END) && (IS_EMPTY_STR(token) == FALSE); token++);
-    TRY_THROW(IS_EMPTY_STR(token) ? INVALID_ADDRESS : OK);
+    for(; (*token != INDEX_END) && !IS_EMPTY_STR(token); token++);
+    TRY_THROW(IS_EMPTY_STR(token) ? MISSING_ARRAY_BRACE : OK);
     SPLIT_STR(token);
 
     /* Validate this is the end of the token */
-    TRY_THROW(IS_EMPTY_STR(token) ? OK : INVALID_ADDRESS);
+    TRY_THROW(IS_EMPTY_STR(token) ? OK : AFTER_TEXT);
 
     /* Set number */
     TRY_THROW(tok_to_num(step_one, index_token, &address_ref->value));
-    TRY_THROW((address_ref->value < 0) ? INVALID_ADDRESS : OK);
+    TRY_THROW((address_ref->value < 0) ? NOT_ARRAY_INDEX : OK);
+
     return OK;
 }

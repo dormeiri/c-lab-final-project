@@ -92,7 +92,15 @@ typedef enum errorCode
     TOO_MANY_OPERANDS = 21,
 
     /* Symbol not declared */
-    NOT_DECLARED = 22
+    NOT_DECLARED = 22,
+
+    /* Array has [ but not ] */
+    MISSING_ARRAY_BRACE = 23,
+
+    NOT_ARRAY_INDEX = 24,
+
+    /* Entry already declared */
+    ENTRY_ALREADY_EXISTS = 25
 } errorCode;
 
 typedef struct error

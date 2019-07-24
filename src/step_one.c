@@ -6,6 +6,7 @@
 
 /* TODO: Organize, maybe split into smaller c files */
 
+static word get_operand_word(address *operand);
 static char operation_operands(operationType op_type);
 static errorCode append_image_lines(step_one *step_one);
 static void free_step_one_objs();
@@ -63,6 +64,7 @@ boolean step_one_line_algo(step_one *step_one)
     {
         temp_str = step_one->curr_statement->tag;
         temp_value = step_one->address_index;
+        /* TODO: Make it shorter */
         TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value));
     }
 
@@ -82,7 +84,7 @@ boolean step_one_line_algo(step_one *step_one)
         /* TODO: TBD */
         case ENTRY_KEY:
             get_label_arg(step_one, &temp_str);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, ENTRY_SYM, 0));
+            TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str));
 
         case OPERATION_KEY:
         case DATA_KEY:
@@ -113,7 +115,7 @@ errorCode enqueue_address(step_one *step_one)
     errorCode res;
     address *curr_address;
     if((res = get_next_arg(step_one, &curr_address)) == OK)
-    {        
+    {
         enqueue(step_one->curr_statement->image_line->addresses, curr_address);
     }
     return res;
@@ -144,7 +146,7 @@ symbolProperty get_symbol_property(statement *statement)
     {
         case MACRO_KEY: return MACRO_SYM;
         case OPERATION_KEY: return CODE_SYM;
-        default: return DATA;
+        default: return DATA_SYM;
     }
 }
 
@@ -184,25 +186,30 @@ errorCode append_operation(step_one *step_one, operationType operation_type, ima
     word_converter w;
     queue_node *nptr;
     char num_of_operands;
+    address *curr_address;
 
     w.raw = 0;
-    nptr = image_line->addresses->head;
-    num_of_operands = operation_operands(operation_type);
-    w.op_word.are = A_ARE; /* TODO: Implement */
-    w.op_word.op_code = operation_type;
+    w.operation_word.op_code = operation_type;
 
-    if(num_of_operands > 0)
+    num_of_operands = operation_operands(operation_type);
+    nptr = image_line->addresses->head;
+    while(num_of_operands--)
     {
         TRY_THROW((nptr) ? OK : MISSING_PARAM);
-        w.op_word.address_src = ((address *)(nptr->data))->type;
-
-        if(num_of_operands > 1)
+        curr_address = ((address *)(nptr->data));
+        if(w.operation_word.address_src)
         {
-            TRY_THROW((nptr = nptr->next) ? OK : MISSING_PARAM);
-            w.op_word.address_dest = ((address *)(nptr->data))->type;
+            w.operation_word.address_dest = curr_address->type;
         }
+        else
+        {
+            w.operation_word.address_src = curr_address->type;
+        }
+        
+        curr_address->value = get_operand_word(curr_address);
+        nptr = nptr->next;
     }
-    if(nptr && nptr->next) 
+    if(nptr) 
     {
         return TOO_MANY_OPERANDS;
     }
@@ -212,15 +219,35 @@ errorCode append_operation(step_one *step_one, operationType operation_type, ima
 
     return OK;
 }
+word get_operand_word(address *operand)
+{
+    word_converter w;
+    w.operand_word.value = operand->value;
+    switch (operand->type)
+    {
+        case REGISTER:
+        case INSTANT:
+        default:
+            w.operand_word.are = A_ARE;
+            break;
+    }
+    w.operand_word.value = operand->value;
+
+    return w.raw;
+}
 
 errorCode append_image_lines(step_one *step_one)
 {
     address *curr_address;
-    while((curr_address = dequeue(step_one->curr_statement->image_line->addresses)))
+    while((curr_address = (address *)dequeue(step_one->curr_statement->image_line->addresses)))
     {
         if(curr_address->symbol_name)
         {
             step_one_add_symbol_usage(step_one, curr_address);
+        }
+        if(curr_address->type == ARRAY)
+        {
+            write_address(step_one->assembler, step_one->address_index++, 0);
         }
 
         write_address(step_one->assembler, step_one->address_index++, curr_address->value);

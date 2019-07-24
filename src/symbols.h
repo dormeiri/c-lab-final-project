@@ -7,6 +7,8 @@ void free_symbols_table(symbols_table *tab);
 
 symbol *next_symbol(symbols_table *tab);
 
+errorCode add_entry_declaration(symbols_table *tab, const char *symbol_name);
+
 errorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value);
 
 /* TODO: Make it use struct */
