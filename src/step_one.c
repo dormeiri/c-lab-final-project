@@ -81,7 +81,6 @@ boolean step_one_line_algo(step_one *step_one)
             TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0));
             break;
 
-        /* TODO: TBD */
         case ENTRY_KEY:
             get_label_arg(step_one, &temp_str);
             TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str));

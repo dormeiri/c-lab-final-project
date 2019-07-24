@@ -59,11 +59,18 @@ errorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
 {
     /* TODO: TBD does entry can be declared with external? */
     symbol_list *sptr;
-    if((sptr = lookup(tab, symbol_name)) && sptr->value->property.ent)
+    if((sptr = lookup(tab, symbol_name)))
     {
-        return ENTRY_ALREADY_EXISTS;
+        if(sptr->value->property.ent)
+        {
+            return ENTRY_ALREADY_EXISTS;
+        }
     }
-    sptr = install(tab, create_symbol(symbol_name, UNKNOWN_SYM));
+    else
+    {
+        sptr = install(tab, create_symbol(symbol_name, UNKNOWN_SYM));
+    }
+    
     sptr->value->property.ent = 1;
     sptr->value->value = 0;
 
@@ -75,12 +82,18 @@ errorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, sy
     word_converter w;
     symbol_list *sptr;
 
-    if((sptr = lookup(tab, symbol_name)) && sptr->value->property.prop != UNKNOWN_SYM)
+    if((sptr = lookup(tab, symbol_name)))
     {
-        return SYMBOL_ALREADY_EXIST;
+        if(sptr->value->property.prop != UNKNOWN_SYM)
+        {
+            return SYMBOL_ALREADY_EXIST;
+        }
+        sptr->value->property.prop = prop;
     }
-    sptr = install(tab, create_symbol(symbol_name, prop));
-    sptr->value->property.prop = prop;
+    else
+    {
+        sptr = install(tab, create_symbol(symbol_name, prop));
+    }
 
     switch (prop)
     {
