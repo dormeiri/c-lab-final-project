@@ -9,6 +9,8 @@
 errorCode is_valid_tag(char *token)
 {
     char i = 1;
+
+    /* TODO: Add reserved words validations */
     TRY_THROW(isalpha(*token));
     for(token++; i > MAX_TAG_LEN || isalnum(*token); token++, i++);
     return *token ? INVALID_TAG : OK;

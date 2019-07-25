@@ -23,6 +23,7 @@ static void append_entries(assembler *assembler, queue *entries)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
+            free(curr_sym);
         }
     }
     fclose(fp);
@@ -43,6 +44,7 @@ static void append_externals(assembler *assembler, queue *externals)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
+            free(curr_sym);
         }
     }
     fclose(fp);

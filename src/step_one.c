@@ -125,7 +125,10 @@ errorCode enqueue_string_address(step_one *step_one, const char *str)
     address *temp_address;
     for(; *str; str++)
     {
-        temp_address = (address *)malloc(sizeof(temp_address));
+        if(!(temp_address = (address *)malloc(sizeof(temp_address))))
+        {
+            exit(EXIT_FAILURE);
+        }
         temp_address->value = *str;
         temp_address->type = INSTANT;
         enqueue(step_one->curr_statement->image_line->addresses, temp_address);
@@ -161,7 +164,6 @@ void step_one_add_symbol_usage(step_one *step_one, address *address)
         add_symbol_usage(tab, address->symbol_name, pos, linen, lines, adrs_i);
     }
 }
-
 
 errorCode append_line(step_one *step_one)
 {
