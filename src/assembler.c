@@ -7,9 +7,9 @@
 #include "step_one.h"
 #include "step_two.h"
 
-boolean run_assembler(const char *filename);
-void free_assembler(assembler *assembler);
-ErrorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
+static boolean run_assembler(const char *filename);
+static void free_assembler(assembler *assembler);
+static ErrorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
 
 int main(int argc, char **argv)
 {
@@ -72,8 +72,8 @@ ErrorCode create_assembler(const char *name, assembler **out)
         exit(EXIT_FAILURE);
     }
 
-    TRY_THROW(get_input(*out, &(*out)->input_fp));
-    TRY_THROW(get_output(*out, TEMP_OBJECT_FILE, &(*out)->output_fp));
+    TRY_THROW(files_get_input(*out, &(*out)->input_fp));
+    TRY_THROW(files_get_output(*out, TEMP_OBJECT_FILE, &(*out)->output_fp));
 
     return OK;
 }

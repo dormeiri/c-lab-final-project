@@ -16,17 +16,17 @@ static char *convert_to_base4(word value);
 /*    Public    */
 /****************/
 
-void update_symbol_usage(assembler *assembler, symbol *symbol, symbol_usage *sym_usage)
+void files_update_symbol_usage(assembler *assembler, symbol *symbol, symbol_usage *sym_usage)
 {
     fseek(assembler->output_fp, sym_usage->file_pos, SEEK_SET);
-    write_address(assembler, sym_usage->address_index, symbol->value);
+    files_write_address(assembler, sym_usage->address_index, symbol->value);
 }
 
-void frecopy_temp_to_obj(assembler *assembler)
+void files_frecopy(assembler *assembler)
 {
     FILE *fp = NULL;
 
-    get_output(assembler, OBJECT_FILE, &fp);
+    files_get_output(assembler, OBJECT_FILE, &fp);
     file_copy(assembler->output_fp, fp);
     fclose(fp);
     fclose(assembler->output_fp);
@@ -38,7 +38,7 @@ ErrorCode files_get_input(assembler *assembler, FILE **out)
     return get_input_file(get_filename(assembler->name, INPUT_EXT), out);
 }
 
-ErrorCode get_output(assembler *assembler, OutputFileType type, FILE **out)
+ErrorCode files_get_output(assembler *assembler, OutputFileType type, FILE **out)
 {
     char *filename;
     switch (type)
@@ -70,12 +70,12 @@ ErrorCode get_output(assembler *assembler, OutputFileType type, FILE **out)
 
     return get_output_file(filename, out);
 }
-ErrorCode read_line(assembler *assembler, char **out)
+ErrorCode files_read_line(assembler *assembler, char **out)
 {
     return fgets_wrapper(assembler->input_fp, out);
 }
 
-void write_address(assembler *assembler, long address_index, word value)
+void files_write_address(assembler *assembler, long address_index, word value)
 {
     fprintf(assembler->output_fp, "%ld\t%s\n", address_index, convert_to_base4(value));
 }

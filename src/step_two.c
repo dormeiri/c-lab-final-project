@@ -16,7 +16,7 @@ static void append_entries(assembler *assembler, Queue *entries)
 
     if(assembler->succeed)
     {
-        get_output(assembler, ENTRY_FILE, &fp);
+        files_get_output(assembler, ENTRY_FILE, &fp);
         while((curr_sym = (symbol *)dequeue(entries)))
         {
             while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
@@ -37,7 +37,7 @@ static void append_externals(assembler *assembler, Queue *externals)
 
     if(assembler->succeed)
     {
-        get_output(assembler, EXTERN_FILE, &fp);
+        files_get_output(assembler, EXTERN_FILE, &fp);
         while((curr_sym = (symbol *)dequeue(externals)))
         {
             while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
@@ -58,7 +58,7 @@ static void update_addresses(assembler *assembler, symbol *sym)
     {
         while((sym_usage = (symbol_usage *)list_get_next(sym->usages)))
         {
-            update_symbol_usage(assembler, sym, sym_usage);
+            files_update_symbol_usage(assembler, sym, sym_usage);
         }
     }
 }
@@ -119,7 +119,7 @@ void step_two_run(assembler *assembler)
         curr_sym = next_symbol(NULL);
     }
 
-    frecopy_temp_to_obj(assembler);
+    files_frecopy(assembler);
     if(!IS_EMPTY_QUEUE(entries))
     {
         append_entries(assembler, entries);

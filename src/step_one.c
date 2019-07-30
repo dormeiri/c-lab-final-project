@@ -26,7 +26,7 @@ void run_step_one(assembler *assembler)
     step_one *step_one;
     step_one = create_step_one(assembler);
 
-    while(read_line(assembler, &step_one->curr_line) == OK)
+    while(files_read_line(assembler, &step_one->curr_line) == OK)
     {
         if(!step_one_line_algo(step_one))
         {
@@ -215,7 +215,7 @@ ErrorCode append_operation(step_one *step_one, operationType operation_type, ima
         return TOO_MANY_OPERANDS;
     }
 
-    write_address(step_one->assembler, step_one->address_index++, w.raw);
+    files_write_address(step_one->assembler, step_one->address_index++, w.raw);
     append_image_lines(step_one);
 
     return OK;
@@ -248,10 +248,10 @@ ErrorCode append_image_lines(step_one *step_one)
         }
         if(curr_address->type == ARRAY)
         {
-            write_address(step_one->assembler, step_one->address_index++, 0);
+            files_write_address(step_one->assembler, step_one->address_index++, 0);
         }
 
-        write_address(step_one->assembler, step_one->address_index++, curr_address->value);
+        files_write_address(step_one->assembler, step_one->address_index++, curr_address->value);
     }
     return OK;
 }
