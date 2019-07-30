@@ -9,13 +9,13 @@
 
 boolean run_assembler(const char *filename);
 void free_assembler(assembler *assembler);
-errorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
+ErrorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
 
 int main(int argc, char **argv)
 {
     if(argc == 1)
     {
-        create_error(INVALID_CL, -1, NULL, NULL);
+        error_print(INVALID_CL, -1, "", "", "Expected at least one argument");
     }
     else
     {
@@ -26,14 +26,16 @@ int main(int argc, char **argv)
 
 boolean run_assembler(const char *filename)
 {
-    errorCode res;
+    /* TODO: Remove old .ext, .entm .ob files, create function in files.h for that */
+
+    ErrorCode res;
     assembler *curr_assembler = NULL;
 
     printf("Started compiling %s\n", filename);
 
     if((res = create_assembler(filename, &curr_assembler)) != OK)
     {
-        create_error(res, -1, filename, NULL);
+        error_print(res, -1, filename, NULL, NULL);
         return FALSE;
     }
     
@@ -57,7 +59,7 @@ boolean run_assembler(const char *filename)
     return curr_assembler->succeed;
 }
 
-errorCode create_assembler(const char *name, assembler **out)
+ErrorCode create_assembler(const char *name, assembler **out)
 {
     if(!(*out = (assembler *)malloc(sizeof(assembler))))
     {

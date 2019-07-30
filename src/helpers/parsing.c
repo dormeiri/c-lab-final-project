@@ -12,6 +12,13 @@ Guidelines:
 #include "validations.h"
 #include "parsing.h"
 
+typedef struct Translation
+{
+    char *str;
+    int type;
+    
+} Translation;
+
 #define COMMENT_CHAR '#'
 #define MACRO_SET_CHAR '='
 #define QUOTE_CHAR '"'
@@ -40,20 +47,20 @@ Guidelines:
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
-static errorCode tok_to_num(step_one *step_one, char *token, word *num_ref);
-static errorCode tok_to_array(step_one *step_one, char *token, address *out);
-static errorCode strtok_wrapper(step_one *step_one, char **tokenp);
-static errorCode map_statement_key(char *statement_key_str, statement *statement_ref);
-static errorCode map_operation_type(char *statement_key_str, statement *statement_ref);
+static ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref);
+static ErrorCode tok_to_array(step_one *step_one, char *token, address *out);
+static ErrorCode strtok_wrapper(step_one *step_one, char **tokenp);
+static ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref);
+static ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref);
 
-errorCode get_label_arg(step_one *step_one, char **label)
+ErrorCode get_label_arg(step_one *step_one, char **label)
 {
     *label = step_one->curr_statement->args;
     clean_token(label);
     return is_valid_tag(*label);
 }
 
-errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
+ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 {
     /* TODO: Break down to smaller funcitons, try to remove duplicates */
 
@@ -72,12 +79,15 @@ errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
     SPLIT_STR(args_str);
     clean_token(symbol);
     clean_token(&args_str);
-    tok_to_num(step_one, args_str, value);
+
+    TRY_THROW(IS_EMPTY_STR(args_str) ? MISSING_PARAM : OK);
+
+    TRY_THROW(tok_to_num(step_one, args_str, value));
 
     return OK;
 }
 
-errorCode map_statement(step_one *step_one)
+ErrorCode map_statement(step_one *step_one)
 {   
     char *statement_key;
     statement *statement = step_one->curr_statement;
@@ -136,7 +146,7 @@ void clean_token(char **token_ref)
     }
 }
 
-errorCode get_next_arg(step_one *step_one, address **out)
+ErrorCode get_next_arg(step_one *step_one, address **out)
 {
     char *token;
     *out = (address *)malloc(sizeof(out));
@@ -195,7 +205,7 @@ errorCode get_next_arg(step_one *step_one, address **out)
     return OK;
 }
 
-errorCode get_string_arg(step_one *step_one, char **str_ref)
+ErrorCode get_string_arg(step_one *step_one, char **str_ref)
 {
     char *args_str = step_one->curr_statement->args;
     clean_token(&args_str);
@@ -222,9 +232,9 @@ errorCode get_string_arg(step_one *step_one, char **str_ref)
 /***** Privates *****/
 /********************/
 
-errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
+ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 {
-    static translator translator_arr[] = 
+    static Translation translations[] = 
     {
         {".data",   DATA_KEY},
         {".string", STRING_KEY},
@@ -237,12 +247,12 @@ errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 
     if(statement_key_str[0] == '.')
     {
-        for(i = 0; (translator_arr[i].str) && strcmp(translator_arr[i].str, statement_key_str); i++);
-        if(!(translator_arr[i].str))
+        for(i = 0; (translations[i].str) && strcmp(translations[i].str, statement_key_str); i++);
+        if(!(translations[i].str))
         {
             return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
         }
-        statement_ref->statement_type = translator_arr[i].type;
+        statement_ref->statement_type = translations[i].type;
         statement_ref->operation_type = NONE_OP;
     }
     else
@@ -254,9 +264,9 @@ errorCode map_statement_key(char *statement_key_str, statement *statement_ref)
     return OK;
 }
 
-errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
+ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 {
-    static translator translator_arr[] = 
+    static Translation translations[] = 
     {
         {"mov", MOV_OP},
         {"add", ADD_OP},
@@ -277,19 +287,19 @@ errorCode map_operation_type(char *statement_key_str, statement *statement_ref)
     };
     unsigned char i;
 
-    for(i = 0; strcmp(translator_arr[i].str, statement_key_str); i++);
-    if(translator_arr[i].str == NULL)
+    for(i = 0; strcmp(translations[i].str, statement_key_str); i++);
+    if(translations[i].str == NULL)
     {
         return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
     }
-    statement_ref->operation_type = translator_arr[i].type;
+    statement_ref->operation_type = translations[i].type;
 
     return OK;
 }
 
 /* Parse the next token with strtok, clean this token from leading and trailing white spaces,
 and check if the token is valid pass args_str as NULL to continue reading tokens from the last string */
-errorCode strtok_wrapper(step_one *step_one, char **token_ref)
+ErrorCode strtok_wrapper(step_one *step_one, char **token_ref)
 {
     str_len_t i;
     char *args_str = step_one->curr_statement->args;
@@ -308,7 +318,7 @@ errorCode strtok_wrapper(step_one *step_one, char **token_ref)
     return OK;
 }
 
-errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
+ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
 {
     char *end_str;  /* The pointer to the string after the parsed number */
     symbol *sym;
@@ -333,7 +343,7 @@ errorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
     return  OK;
 }
 
-errorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
+ErrorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
 {
     char *index_token; /* The string which represent the index */
 

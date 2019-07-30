@@ -1,8 +1,8 @@
 #ifndef PARSING_HEADER
 #define PARSING_HEADER
 
+#include "error.h"
 #include "../commons.h"
-#include "errors.h"
 #include "../step_one.h"
 
 /* Check wheter a character is white space character */
@@ -18,15 +18,9 @@ CHAR:   The char to look at after each iteration
 */
 #define IGNORE_WHITE_SPACES(STR) for(;IS_WHITESPACE(*STR); (STR)++)
 
-typedef struct translator
-{
-    char *str;
-    int type;
-    
-} translator;
 
 /* Parse the arguments of macro statement */
-errorCode parse_macro_statement(step_one *step_one, char **symbol, word *value);
+ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value);
 
 /* 
 Description:            Split command line to command name and arguments string,
@@ -36,7 +30,7 @@ Parameters:
     - statement_ref:    Reference to statement structs, this is the output
 Return:                 OK if ran as expected, otherwise, error code
 */
-errorCode map_statement(step_one *step_one);
+ErrorCode map_statement(step_one *step_one);
 
 /*
 Description:    Cleans a token from trailing and leading white spaces
@@ -46,10 +40,10 @@ Parameters:
 void clean_token(char **token_ref);
 
 /* get the next argument of the line, address out is initialized inside the function */
-errorCode get_next_arg(step_one *step_one, address **out);
-errorCode get_string_arg(step_one *step_one, char **str_ref);
+ErrorCode get_next_arg(step_one *step_one, address **out);
+ErrorCode get_string_arg(step_one *step_one, char **str_ref);
 
 /* not yet implemented, used to get the label in the argument of entry and extern instructions*/
-errorCode get_label_arg(step_one *step_one, char **label);
+ErrorCode get_label_arg(step_one *step_one, char **label);
 
 #endif

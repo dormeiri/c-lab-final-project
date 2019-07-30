@@ -13,7 +13,7 @@ typedef struct
 
 typedef struct
 {
-    queue *addresses;
+    Queue *addresses;
 } image_line;
 
 typedef struct

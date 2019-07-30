@@ -3,58 +3,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Copy source file to dest file, used to copy temp file stream to object file */
-static void copy_file(FILE *source, FILE *dest);
-
+static void file_copy(FILE *source, FILE *dest);
 static char *get_filename(const char *name, const char *extention);
-/*
-Description:    Open the input file to read and gets pointer to that file
-Parameters: 
-    - filename: The file name
-    - fp_ref:   The file pointer reference
-Return: If any error occured, error code, otherwise OK
-*/
-static errorCode get_input_file(char *filename, FILE **fp_ref);
-
-/*
-Description:    Open the output file to write and gets pointer to that file
-Parameters: 
-    - filename: The file name
-    - fp_ref:   The file pointer reference
-Return: If any error occured, error code, otherwise OK
- */
-static errorCode get_output_file(char *filename, FILE **fp_ref);
-
-/*
-Description:    Extention for fgets that does validations 
-Parameters: 
-    - fp:       FILE pointer
-    - line_ref: Reference to line string
-Return: If any error occured, error code, otherwise OK
- */
-static errorCode fgets_wrapper(FILE *fp, char **line_ref);
-
-/* 
-Description:        Extention to fopen to do validation
-Parameters:
-    - file_path:    The path of the file to open
-    - mode:         fopen mode
-    - fp_ref:       The reference to the FILE pointer
-Return:             If error occured, error code, otherwise, OK
- */
-static errorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
-
-/* 
-Description:    Generic open file function
-Parameters:
-    - filename: The relative path of the file
-    - mode:     fopen mode
-    - fp_ref:   The reference to the FILE pointer
-Return:         If error occured, error code, otherwise, OK
- */
-static errorCode get_file(char *filename, char *mode, FILE **fp_ref);
-
-/* Converts word to special base 4 */
+static ErrorCode get_input_file(char *filename, FILE **fp_ref);
+static ErrorCode get_output_file(char *filename, FILE **fp_ref);
+static ErrorCode fgets_wrapper(FILE *fp, char **line_ref);
+static ErrorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
+static ErrorCode get_file(char *filename, char *mode, FILE **fp_ref);
 static char *convert_to_base4(word value);
 
 /****************/
@@ -72,18 +27,18 @@ void frecopy_temp_to_obj(assembler *assembler)
     FILE *fp = NULL;
 
     get_output(assembler, OBJECT_FILE, &fp);
-    copy_file(assembler->output_fp, fp);
+    file_copy(assembler->output_fp, fp);
     fclose(fp);
     fclose(assembler->output_fp);
 }
 
 
-errorCode get_input(assembler *assembler, FILE **out)
+ErrorCode files_get_input(assembler *assembler, FILE **out)
 {
     return get_input_file(get_filename(assembler->name, INPUT_EXT), out);
 }
 
-errorCode get_output(assembler *assembler, outputFileType type, FILE **out)
+ErrorCode get_output(assembler *assembler, OutputFileType type, FILE **out)
 {
     char *filename;
     switch (type)
@@ -115,9 +70,9 @@ errorCode get_output(assembler *assembler, outputFileType type, FILE **out)
 
     return get_output_file(filename, out);
 }
-errorCode read_line(assembler *assembler, char **line_ref)
+ErrorCode read_line(assembler *assembler, char **out)
 {
-    return fgets_wrapper(assembler->input_fp, line_ref);
+    return fgets_wrapper(assembler->input_fp, out);
 }
 
 void write_address(assembler *assembler, long address_index, word value)
@@ -130,7 +85,7 @@ void write_address(assembler *assembler, long address_index, word value)
 /*    Privates    */
 /******************/
 
-void copy_file(FILE *source, FILE *dest)
+void file_copy(FILE *source, FILE *dest)
 {
     char c;
 
@@ -143,20 +98,20 @@ void copy_file(FILE *source, FILE *dest)
 }
 
 /* Do get_file with 'r' mode */
-errorCode get_input_file(char *filename, FILE **fp_ref)
+ErrorCode get_input_file(char *filename, FILE **fp_ref)
 {
     TRY_THROW(get_file(filename, "r+", fp_ref));
     return OK;
 }
 
 /* Do get_file with 'w' mode */
-errorCode get_output_file(char *filename, FILE **fp_ref)
+ErrorCode get_output_file(char *filename, FILE **fp_ref)
 {
     TRY_THROW(get_file(filename, "w", fp_ref));
     return OK;
 }
 
-errorCode fgets_wrapper(FILE *fp, char **line_ref)
+ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
 {
     static char buffer[MAX_STRING_LEN];
     size_t line_len;
@@ -188,7 +143,7 @@ errorCode fgets_wrapper(FILE *fp, char **line_ref)
 }
 
 /* Do get_relative_file_path and fopen_wrapper, save the result in fp_ref, return error on fail */
-errorCode get_file(char *filename, char *mode, FILE **fp_ref)
+ErrorCode get_file(char *filename, char *mode, FILE **fp_ref)
 {
     FILE *fp;
 
@@ -199,7 +154,7 @@ errorCode get_file(char *filename, char *mode, FILE **fp_ref)
 }
 
 /* Validate that fopen didn't returned NULL */
-errorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref)
+ErrorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref)
 {
     *fp_ref = fopen(file_path, mode);
 

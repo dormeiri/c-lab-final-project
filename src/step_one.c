@@ -8,18 +8,18 @@
 
 static word get_operand_word(address *operand);
 static char operation_operands(operationType op_type);
-static errorCode append_image_lines(step_one *step_one);
+static ErrorCode append_image_lines(step_one *step_one);
 static void free_step_one_objs();
 static statement *create_statement();
 static step_one *create_step_one(assembler *assembler);
 static symbolProperty get_symbol_property(statement *statement);
 static boolean step_one_line_algo(step_one *step_one);
-static errorCode enqueue_string_address(step_one *step_one, const char *str);
-static errorCode enqueue_address(step_one *step_one);
-static void create_step_one_error(step_one *step_one, errorCode errorCode);
+static ErrorCode enqueue_string_address(step_one *step_one, const char *str);
+static ErrorCode enqueue_address(step_one *step_one);
+static void create_step_one_error(step_one *step_one, ErrorCode ErrorCode, const char *info);
 /* Translate the current image_line of the current statement in step_one and append the addresses to the file */
-static errorCode append_line(step_one *step_one);
-static errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line);
+static ErrorCode append_line(step_one *step_one);
+static ErrorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line);
 
 void run_step_one(assembler *assembler)
 {
@@ -41,16 +41,16 @@ void run_step_one(assembler *assembler)
 
 boolean step_one_line_algo(step_one *step_one)
 {
-#define TRY_THROW_S1(FUNC) {\
-    errorCode RES;\
-    if((RES = FUNC) != OK)\
+#define TRY_THROW_S1(FUNC, INFO) {\
+    ErrorCode RES;\
+    if((RES = (FUNC)) != OK)\
     {\
-        create_step_one_error(step_one, RES);\
+        create_step_one_error(step_one, RES, INFO);\
         return FALSE;\
     }\
 }
 
-    errorCode res;
+    ErrorCode res;
     char *temp_str;
     word temp_value;
 
@@ -58,47 +58,47 @@ boolean step_one_line_algo(step_one *step_one)
     step_one->curr_line_copy = strncpy(temp_str, step_one->curr_line, MAX_STRING_LEN);
 
     step_one->curr_statement = create_statement();
-    TRY_THROW_S1(map_statement(step_one));
+    TRY_THROW_S1(map_statement(step_one), NULL);
 
     if(step_one->curr_statement->tag)
     {
         temp_str = step_one->curr_statement->tag;
         temp_value = step_one->address_index;
         /* TODO: Make it shorter */
-        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value));
+        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value), NULL);
     }
 
     switch (step_one->curr_statement->statement_type)
     {
         case MACRO_KEY:
-            TRY_THROW_S1(step_one->curr_statement->tag ? INVALID_COMB_LABEL_MACRO : OK);
-            TRY_THROW_S1(parse_macro_statement(step_one, &temp_str, &temp_value));
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value));
+            TRY_THROW_S1(step_one->curr_statement->tag ? INVALID_COMB_LABEL_MACRO : OK, NULL);
+            TRY_THROW_S1(parse_macro_statement(step_one, &temp_str, &temp_value), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value), NULL);
             return TRUE;
 
         case EXTERN_KEY:
             get_label_arg(step_one, &temp_str);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0));
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0), NULL);
             break;
 
         case ENTRY_KEY:
             get_label_arg(step_one, &temp_str);
-            TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str));
+            TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str), NULL);
 
         case OPERATION_KEY:
         case DATA_KEY:
             
             while((res = enqueue_address(step_one)) == OK);
-            TRY_THROW_S1(res == MISSING_PARAM ? OK : res);
-            TRY_THROW_S1(append_line(step_one));
+            TRY_THROW_S1(res == MISSING_PARAM ? OK : res, NULL);
+            TRY_THROW_S1(append_line(step_one), NULL);
             break;
 
         case STRING_KEY:
             {
                 char *str;
-                TRY_THROW_S1(get_string_arg(step_one, &str));
+                TRY_THROW_S1(get_string_arg(step_one, &str), NULL);
                 enqueue_string_address(step_one, str);
-                TRY_THROW_S1(append_line(step_one));
+                TRY_THROW_S1(append_line(step_one), NULL);
             }
             break;
 
@@ -109,9 +109,9 @@ boolean step_one_line_algo(step_one *step_one)
     return TRUE;
 }
 
-errorCode enqueue_address(step_one *step_one)
+ErrorCode enqueue_address(step_one *step_one)
 {
-    errorCode res;
+    ErrorCode res;
     address *curr_address;
     if((res = get_next_arg(step_one, &curr_address)) == OK)
     {
@@ -120,7 +120,7 @@ errorCode enqueue_address(step_one *step_one)
     return res;
 }
 
-errorCode enqueue_string_address(step_one *step_one, const char *str)
+ErrorCode enqueue_string_address(step_one *step_one, const char *str)
 {
     address *temp_address;
     for(; *str; str++)
@@ -137,9 +137,9 @@ errorCode enqueue_string_address(step_one *step_one, const char *str)
 }
 
 
-void create_step_one_error(step_one *step_one, errorCode errorCode)
+void create_step_one_error(step_one *step_one, ErrorCode ErrorCode, const char *info)
 {
-    create_error(errorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy);
+    error_print(ErrorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy, info);
 }
 
 symbolProperty get_symbol_property(statement *statement)
@@ -165,7 +165,7 @@ void step_one_add_symbol_usage(step_one *step_one, address *address)
     }
 }
 
-errorCode append_line(step_one *step_one)
+ErrorCode append_line(step_one *step_one)
 {
     statement *statement;
     statement = step_one->curr_statement;
@@ -182,10 +182,10 @@ errorCode append_line(step_one *step_one)
 }
 
 
-errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line)
+ErrorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line)
 {
     word_converter w;
-    queue_node *nptr;
+    QueueNode *nptr;
     char num_of_operands;
     address *curr_address;
 
@@ -237,7 +237,7 @@ word get_operand_word(address *operand)
     return w.raw;
 }
 
-errorCode append_image_lines(step_one *step_one)
+ErrorCode append_image_lines(step_one *step_one)
 {
     address *curr_address;
     while((curr_address = (address *)dequeue(step_one->curr_statement->image_line->addresses)))

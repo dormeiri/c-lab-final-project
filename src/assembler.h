@@ -2,7 +2,7 @@
 #define ASSEMBLER_HEADER
 
 #include <stdio.h>
-#include "helpers/errors.h"
+#include "helpers/error.h"
 #include "helpers/list.h"
 #include "helpers/queue.h"
 
@@ -118,7 +118,7 @@ typedef struct
         unsigned int ent : 1;
     } property;
     word value;
-    list *usages;
+    List *usages;
 } symbol;
 
 typedef struct symbol_list

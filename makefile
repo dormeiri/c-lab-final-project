@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -pedantic -Wall -ansi
-DEPS = src/commons.h src/helpers/errors.h src/assembler.h src/step_one.h src/step_two.h src/symbols.h src/helpers/parsing.h src/helpers/validations.h src/helpers/queue.h src/helpers/list.h src/helpers/files.h
-OBJ = src/assembler.o src/helpers/errors.o src/step_one.o src/step_two.o src/symbols.o src/helpers/parsing.o src/helpers/validations.o src/helpers/queue.o src/helpers/list.o src/helpers/files.o
+DEPS = src/commons.h src/helpers/error.h src/assembler.h src/step_one.h src/step_two.h src/symbols.h src/helpers/parsing.h src/helpers/validations.h src/helpers/queue.h src/helpers/list.h src/helpers/files.h
+OBJ = src/assembler.o src/helpers/error.o src/step_one.o src/step_two.o src/symbols.o src/helpers/parsing.o src/helpers/validations.o src/helpers/queue.o src/helpers/list.o src/helpers/files.o
 UTOBJ = tests/unit_tests/unit_test.o
 
 %.o: %.c $(DEPS)

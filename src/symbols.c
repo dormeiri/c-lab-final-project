@@ -55,7 +55,7 @@ symbol *next_symbol(symbols_table *tab)
     return curr_node ? curr_node->value : NULL;
 }
 
-errorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
+ErrorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
 {
     /* TODO: TBD does entry can be declared with external? */
     symbol_list *sptr;
@@ -77,7 +77,7 @@ errorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
     return OK;
 }
 
-errorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value)
+ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value)
 {
     word_converter w;
     symbol_list *sptr;
@@ -117,7 +117,7 @@ errorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, sy
     return OK;
 }
 
-errorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, long address_index)
+ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, long address_index)
 {
     symbol_list *sptr;
     symbol_usage *result;

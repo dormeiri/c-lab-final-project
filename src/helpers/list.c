@@ -1,10 +1,10 @@
 #include "list.h"
 
-list *list_new(size_t size)
+List *list_new(size_t size)
 {
-    list *result;
+    List *result;
     
-    if(!(result = (list *)malloc(sizeof(list))))
+    if(!(result = (List *)malloc(sizeof(List))))
     {
         exit(EXIT_FAILURE);
     }
@@ -14,10 +14,10 @@ list *list_new(size_t size)
     return result;
 }
 
-void list_add(list *l, void *data)
+void list_add(List *l, void *data)
 {
-    list_node *new;
-    if(!(new = (list_node *)malloc(sizeof(list_node))))
+    ListNode *new;
+    if(!(new = (ListNode *)malloc(sizeof(ListNode))))
     {
         exit(EXIT_FAILURE);
     }
@@ -36,10 +36,10 @@ void list_add(list *l, void *data)
     }
 }
 
-void *list_get_next(list *l)
+void *list_get_next(List *l)
 {
-    static list *l_prev = NULL;
-    static list_node *n_prev = NULL;
+    static List *l_prev = NULL;
+    static ListNode *n_prev = NULL;
 
     void *result;
 
@@ -69,9 +69,9 @@ void *list_get_next(list *l)
     return result;
 }
 
-void list_free(list *l)
+void list_free(List *l)
 {
-    list_node *temp;
+    ListNode *temp;
     while((temp = l->head))
     {
         l->head = l->head->next;

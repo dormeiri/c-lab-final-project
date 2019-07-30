@@ -6,7 +6,7 @@
 
 /* TODO: Move private to the and and create prototypes */
 
-static void append_entries(assembler *assembler, queue *entries)
+static void append_entries(assembler *assembler, Queue *entries)
 {
     FILE *fp;
     symbol *curr_sym;
@@ -29,7 +29,7 @@ static void append_entries(assembler *assembler, queue *entries)
     fclose(fp);
 }
 
-static void append_externals(assembler *assembler, queue *externals)
+static void append_externals(assembler *assembler, Queue *externals)
 {
     FILE *fp;
     symbol *curr_sym;
@@ -63,7 +63,7 @@ static void update_addresses(assembler *assembler, symbol *sym)
     }
 }
 
-static void create_error_step_two(assembler *assembler, symbol *sym)
+static void error_new_step_two(assembler *assembler, symbol *sym)
 {
     symbol_usage *sym_usage;
 
@@ -71,15 +71,15 @@ static void create_error_step_two(assembler *assembler, symbol *sym)
     while((sym_usage = (symbol_usage *)list_get_next(sym->usages)))
     {
         /* Not declared symbol is the only error can occured during step two */
-        create_error(NOT_DECLARED, sym_usage->line_num, assembler->name, sym_usage->line_str);
+        error_print(NOT_DECLARED, sym_usage->line_num, assembler->name, sym_usage->line_str, sym->symbol_name);
     }
 }
 
 void step_two_run(assembler *assembler)
 {
     symbol *curr_sym;
-    queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
-    queue *externals;   /* The same as entries queue but for externals */
+    Queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
+    Queue *externals;   /* The same as entries queue but for externals */
 
     puts("Start step two");
 
@@ -91,7 +91,7 @@ void step_two_run(assembler *assembler)
     {
         if(curr_sym->property.prop == UNKNOWN_SYM)
         {
-            create_error_step_two(assembler, curr_sym);
+            error_new_step_two(assembler, curr_sym);
         }
         /* TODO: Create warning on declared but not used */
         else

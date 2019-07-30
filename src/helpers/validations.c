@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-errorCode is_valid_tag(char *token)
+ErrorCode is_valid_tag(char *token)
 {
     char i = 1;
 
@@ -19,7 +19,7 @@ errorCode is_valid_tag(char *token)
 
 /* Check if there is DELIM_CHAR in command_str, 
 then check if the first character in args_str is DELIM_CHAR */
-errorCode preaction_validations(char *command_str, char *args_str)
+ErrorCode preaction_validations(char *command_str, char *args_str)
 {
     for(; *command_str != '\0'; command_str++)
     {
@@ -37,7 +37,7 @@ errorCode preaction_validations(char *command_str, char *args_str)
 }
 
 /* Check if strtok is not returning NULL, then it means that there is unexpected DELIM_CHAR in the command line */
-errorCode postparsing_validations()
+ErrorCode postparsing_validations()
 {
     if(strtok(NULL, DELIM) != NULL)
     {
@@ -48,7 +48,7 @@ errorCode postparsing_validations()
 }
 
 /* Check for white spaces in a cleaned token */
-errorCode check_cleaned_token(char *token)
+ErrorCode check_cleaned_token(char *token)
 {
     for(; !IS_EMPTY_STR(token); token++)
     {
@@ -62,7 +62,7 @@ errorCode check_cleaned_token(char *token)
 }
 
 /* Check if the first letter after token string is DELIM_CHAR (ignoring white spaces) */
-errorCode check_token_consecutive(char *token)
+ErrorCode check_token_consecutive(char *token)
 {
     token += strlen(token) + 1;
     IGNORE_WHITE_SPACES(token);
@@ -74,7 +74,7 @@ errorCode check_token_consecutive(char *token)
     return OK;
 }
 
-errorCode check_empty_args(char *args_str)
+ErrorCode check_empty_args(char *args_str)
 {
     IGNORE_WHITE_SPACES(args_str);
     return IS_EMPTY_STR(args_str);

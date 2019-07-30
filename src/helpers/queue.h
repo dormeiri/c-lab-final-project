@@ -4,18 +4,18 @@
 #include <stdlib.h>
 #include "../commons.h"
 
-typedef struct queue_node
+typedef struct QueueNode
 {
     void *data;
-    struct queue_node *next;
-} queue_node;
+    struct QueueNode *next;
+} QueueNode;
 
-typedef struct queue
+typedef struct Queue
 {
-    queue_node *head;
-    queue_node *tail;
+    QueueNode *head;
+    QueueNode *tail;
     size_t data_size;
-} queue;
+} Queue;
 
 #define IS_EMPTY_QUEUE(QREF) (!QREF || (QREF)->head == NULL)
 
@@ -26,16 +26,16 @@ Parameters:
 Return:         The head of the initialized queue
 Exceptions:     Exit if couldn't allocate memory for the queue
 */
-queue *initilize_queue(size_t node_size);
+Queue *initilize_queue(size_t node_size);
 
 /*
 Description:    Enqueue new node into queue
 Parameters:
     queue:      The head of the queue
-    value_ref:  Reference to a generic value
+    data:       Reference to a generic value
 Exceptions:     Exit if couldn't allocate memory for the queue
 */
-void enqueue(queue *queue, void *value_ref);
+void enqueue(Queue *q, void *data);
 
 /*
 Description:    Dequeue tail from queue
@@ -43,13 +43,13 @@ Parameters:
     queue:      Pointer to a queue
 Return:         The value of the dequeued node
 */
-void *dequeue(queue *queue);
+void *dequeue(Queue *q);
 
 /*
 Description:    Free queue
 Parameters:
     queue:      Pointer to a queue
 */
-void free_queue(queue *queue);
+void free_queue(Queue *q);
 
 #endif

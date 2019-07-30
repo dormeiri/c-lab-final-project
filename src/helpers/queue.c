@@ -1,9 +1,9 @@
 #include <string.h>
 #include "queue.h"
 
-queue *initilize_queue(size_t data_size)
+Queue *initilize_queue(size_t data_size)
 {
-    queue *new_queue = (queue *)malloc(sizeof(queue));
+    Queue *new_queue = (Queue *)malloc(sizeof(Queue));
     new_queue->head = NULL;
     new_queue->tail = NULL;
     new_queue->data_size = data_size;
@@ -11,20 +11,20 @@ queue *initilize_queue(size_t data_size)
     return new_queue;
 }
 
-void free_queue(queue *queue)
+void free_queue(Queue *Queue)
 {
-    queue_node *temp;
-    while((temp = queue->head))
+    QueueNode *temp;
+    while((temp = Queue->head))
     {
-        queue->head = queue->head->next;
+        Queue->head = Queue->head->next;
         free(temp);
     }
 }
 
-void enqueue(queue *queue, void *value_ref)
+void enqueue(Queue *Queue, void *value_ref)
 {
     /* Allocate memory for new node */
-    queue_node *new_node = (queue_node *)malloc(sizeof(queue_node));
+    QueueNode *new_node = (QueueNode *)malloc(sizeof(QueueNode));
     if(new_node == NULL)
     {
         exit(EXIT_FAILURE);
@@ -34,39 +34,39 @@ void enqueue(queue *queue, void *value_ref)
     new_node->next = NULL;
 
     /* Add the new node to the queue */
-    if(IS_EMPTY_QUEUE(queue))
+    if(IS_EMPTY_QUEUE(Queue))
     {
-        queue->head = queue->tail = new_node;
+        Queue->head = Queue->tail = new_node;
     }
     else
     {
-        queue->tail = queue->tail->next = new_node;
+        Queue->tail = Queue->tail->next = new_node;
     }
 }
 
-void *dequeue(queue *queue)
+void *dequeue(Queue *Queue)
 {
-    queue_node *removed_node;
+    QueueNode *removed_node;
     void *value_ref;
 
-    if(IS_EMPTY_QUEUE(queue))
+    if(IS_EMPTY_QUEUE(Queue))
     {
         return NULL;
     }
 
-    if(!(value_ref = malloc(queue->data_size)))
+    if(!(value_ref = malloc(Queue->data_size)))
     {
         exit(EXIT_FAILURE);
     }
 
-    removed_node = queue->head;
+    removed_node = Queue->head;
     /* Copy the data from the node to local variable because we are going to free the node */
-    memcpy(value_ref, queue->head->data, queue->data_size);
+    memcpy(value_ref, Queue->head->data, Queue->data_size);
 
-    queue->head = queue->head->next;
-    if(!queue->head)
+    Queue->head = Queue->head->next;
+    if(!Queue->head)
     {
-        queue->tail = NULL;
+        Queue->tail = NULL;
     }
 
     free(removed_node);
