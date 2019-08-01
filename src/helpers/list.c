@@ -81,7 +81,7 @@ void *list_get_next(List *l)
 
     return result;
 }
-
+#include <stdio.h>
 /* Go throught the nodes in the list and free it, after that free the list itself */
 void list_free(List *l)
 {
@@ -91,5 +91,6 @@ void list_free(List *l)
         l->head = l->head->next;
         free(temp);
     }
-    free(l);
+    l->head = NULL;
+    l->tail = NULL;
 }

@@ -23,7 +23,7 @@ static void append_entries(assembler *assembler, Queue *entries)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
-            free(curr_sym);
+            symbol_free(curr_sym);
         }
     }
     fclose(fp);
@@ -44,7 +44,7 @@ static void append_externals(assembler *assembler, Queue *externals)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
-            free(curr_sym);
+            symbol_free(curr_sym);
         }
     }
     fclose(fp);
@@ -123,12 +123,12 @@ void step_two_run(assembler *assembler)
     if(!IS_EMPTY_QUEUE(entries))
     {
         append_entries(assembler, entries);
-        queue_free(entries);
+        symbol_queue_free(entries);
     }
     if(!IS_EMPTY_QUEUE(externals))
     {
         append_externals(assembler, externals);
-        queue_free(externals);
+        symbol_queue_free(externals);
     }
     /* free_symbols_table(assembler->symbols_table); */
 }
