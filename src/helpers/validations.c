@@ -19,7 +19,7 @@ ErrorCode is_valid_tag(char *token)
 
 /* Check if there is DELIM_CHAR in command_str, 
 then check if the first character in args_str is DELIM_CHAR */
-ErrorCode preaction_validations(char *command_str, char *args_str)
+/*ErrorCode preaction_validations(char *command_str, char *args_str)
 {
     for(; *command_str != '\0'; command_str++)
     {
@@ -34,10 +34,10 @@ ErrorCode preaction_validations(char *command_str, char *args_str)
         return ILLEGAL_COMMA;
     }
     return OK;
-}
+}*/ /* Decide if we want to delete */
 
 /* Check if strtok is not returning NULL, then it means that there is unexpected DELIM_CHAR in the command line */
-ErrorCode postparsing_validations()
+/*ErrorCode postparsing_validations()
 {
     if(strtok(NULL, DELIM) != NULL)
     {
@@ -45,7 +45,7 @@ ErrorCode postparsing_validations()
     }
 
     return OK;
-}
+}*/ /* TODO: Decide if we want to delete */
 
 /* Check for white spaces in a cleaned token */
 ErrorCode check_cleaned_token(char *token)
@@ -72,10 +72,4 @@ ErrorCode check_token_consecutive(char *token)
     }
 
     return OK;
-}
-
-ErrorCode check_empty_args(char *args_str)
-{
-    IGNORE_WHITE_SPACES(args_str);
-    return IS_EMPTY_STR(args_str);
 }

@@ -19,47 +19,119 @@ typedef struct Translation
     
 } Translation;
 
+/* Comment charecter */
 #define COMMENT_CHAR '#'
+
+/* Macro set value charcter */
 #define MACRO_SET_CHAR '='
+
+/* Quotes character */
 #define QUOTE_CHAR '"'
+
+/* Instant addressing value charecter */
 #define INSTANT_CHAR '#'
+
+/* Indicate array index start */
 #define INDEX_START '['
+
+/* Indicate array index end */
 #define INDEX_END ']'
+
+/* Indicate tag end */
 #define TAG_END ':'
+
+/* Indicate register */
 #define REGISTER_CHAR 'r'
-#define REGISTER_INDEX(STR) (STR[1] - '0')
-#define IS_COMMENT(STR) (*STR == COMMENT_CHAR)
-#define IS_NUM_FIRST_CHAR(STR) (isdigit(STR[0]) || STR[0] == '-' || STR[0] == '+')
+
+/* Get register number */
+#define REGISTER_INDEX(STR) ((STR)[1] - '0') /* TODO: Assumption is made here: no more than 10 registers, maybe shuold be changed */
+
+/* Check if string is comment */
+#define IS_COMMENT(STR) (*(STR) == COMMENT_CHAR)
+
+/* Check if the string represent a number */
+#define IS_NUM_FIRST_CHAR(STR) (isdigit((STR)[0]) || (STR)[0] == '-' || (STR)[0] == '+')
+
+/* Check if string is register */
 #define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
-#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && STR[2] == '\0')
-#define IS_ARRAY(STR) (strchr(STR, '['))
+
+/* Check if string is valid register */ /* TODO: Assumption is made here: no more than 10 registers, maybe shuold be changed */
+#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && (STR)[2] == '\0')
+
+/* Check if string is array */
+#define IS_ARRAY(STR) (strchr((STR), '['))
 
 /* Split string in its current pointer position */
-#define SPLIT_STR(STR) *(STR++) = '\0'
+#define SPLIT_STR(STR) *((STR)++) = '\0'
 
 /* Read statment first word into DEST */
-#define READ_FIRST_WORD(STR, DEST) \
+#define READ_FIRST_WORD(STR, DEST)\
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR) || *STR == TAG_END) == FALSE; STR++)
 
 /* Read statement second word into DEST */
-#define READ_SECOND_WORD(STR, DEST) \
+#define READ_SECOND_WORD(STR, DEST)\
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
-static ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref);
-static ErrorCode tok_to_array(step_one *step_one, char *token, address *out);
-static ErrorCode strtok_wrapper(step_one *step_one, char **tokenp);
 static ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref);
 static ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref);
+static ErrorCode tok_to_num(step_one *step_one, char *token, word *out);
+static ErrorCode tok_to_array(step_one *step_one, char *token, address *out);
+static ErrorCode strtok_wrapper(step_one *step_one, char **tokenp);
+static void clean_token(char **token_ref);
 
-ErrorCode get_label_arg(step_one *step_one, char **label)
-{
-    *label = step_one->curr_statement->args;
-    clean_token(label);
-    return is_valid_tag(*label);
+/*****************/
+/*    Publics    */
+/*****************/
+
+/* Check the instruction type of the current line of step_one,
+Also check if there is any tag declared
+put the result in step one current statement */
+ErrorCode map_statement(step_one *step_one)
+{   
+    char *statement_key;    /* Store the instruction string (example: .data, mov,...) */
+    statement *statement = step_one->curr_statement;
+    char *statement_line = step_one->curr_line;
+
+    IGNORE_WHITE_SPACES(statement_line);
+    if(IS_COMMENT(statement_line)) /* Comment line */
+    {
+        statement->statement_type = COMMENT_KEY;
+        return OK;
+    }
+    if(IS_EMPTY_STR(statement_line)) /* Empty line */
+    {
+        statement->statement_type = EMPTY_KEY;
+        return OK;
+    }
+
+    READ_FIRST_WORD(statement_line, statement->tag);
+    if(*statement_line == TAG_END) /* Has tag */
+    {
+        SPLIT_STR(statement_line);
+        IGNORE_WHITE_SPACES(statement_line);
+        READ_SECOND_WORD(statement_line, statement_key);
+    }
+    else
+    {
+        statement_key = statement->tag;
+        statement->tag = NULL;
+    }
+    
+    /* Split instruction string and arguments string */
+    if(IS_EMPTY_STR(statement_line) == FALSE)
+    {
+        SPLIT_STR(statement_line);
+        IGNORE_WHITE_SPACES(statement_line);
+    }
+    statement->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
+
+    TRY_THROW(map_statement_key(statement_key, statement));
+    return OK;
 }
 
+/* Parse macro statement by splitting the results by MACRO_SET_CHAT */
 ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 {
     /* TODO: Break down to smaller funcitons, try to remove duplicates */
@@ -87,102 +159,44 @@ ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
     return OK;
 }
 
-ErrorCode map_statement(step_one *step_one)
-{   
-    char *statement_key;
-    statement *statement = step_one->curr_statement;
-    char *statement_line = step_one->curr_line;
-
-    IGNORE_WHITE_SPACES(statement_line);
-    if(IS_COMMENT(statement_line))
-    {
-        statement->statement_type = COMMENT_KEY;
-        return OK;
-    }
-    if(IS_EMPTY_STR(statement_line))
-    {
-        statement->statement_type = EMPTY_KEY;
-        return OK;
-    }
-
-    READ_FIRST_WORD(statement_line, statement->tag);
-    if(*statement_line == TAG_END)
-    {
-        SPLIT_STR(statement_line);
-        IGNORE_WHITE_SPACES(statement_line);
-        READ_SECOND_WORD(statement_line, statement_key);
-    }
-    else
-    {
-        statement_key = statement->tag;
-        statement->tag = NULL;
-    }
-    
-    if(IS_EMPTY_STR(statement_line) == FALSE)
-    {
-        SPLIT_STR(statement_line);
-        IGNORE_WHITE_SPACES(statement_line);
-    }
-    statement->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
-
-    TRY_THROW(map_statement_key(statement_key, statement));
-    return OK;
-}
-
-/* Advence the pointer to the token by one for each white space found,
-and put '\0' in the last white space found from the end */
-void clean_token(char **token_ref)
-{
-    str_len_t i;
-
-    /* Clean the leading white spaces */
-    IGNORE_WHITE_SPACES(*token_ref);
-
-    /* Check if every character in the token was white space, if not, clean trailing white spaces */
-    if(IS_EMPTY_STR(*token_ref) == FALSE)
-    {
-        for(i = strlen(*token_ref) - 1; i >= 0 && IS_WHITESPACE((*token_ref)[i]); i--);
-        (*token_ref)[i + 1] = '\0';
-    }
-}
-
+/* Get the next argument of step one current statement, put the result in out */
 ErrorCode get_next_arg(step_one *step_one, address **out)
 {
     char *token;
-    *out = (address *)malloc(sizeof(out));
-    (*out)->symbol_name = NULL;
-    (*out)->value = 0;
 
-    if(out == NULL)
+    if(!(*out = (address *)malloc(sizeof(address))))
     {
         exit(EXIT_FAILURE);
     }
+
+    (*out)->symbol_name = NULL;
+    (*out)->value = 0;
 
     TRY_THROW(strtok_wrapper(step_one, &token));
     step_one->curr_statement->args = NULL;
     (*out)->symbol_name = NULL;
 
-    if(IS_NUM_FIRST_CHAR(token))
+    if(IS_NUM_FIRST_CHAR(token)) /* Data type address */
     {
         TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
         (*out)->type = DATA;
     }
-    else if(token[0] == INSTANT_CHAR)
+    else if(token[0] == INSTANT_CHAR) /* Instant type address */
     {
         token++;
         TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
         (*out)->type = INSTANT;
     }
-    else if(IS_VALID_REGISTER(token))
+    else if(IS_VALID_REGISTER(token)) /* Register type address */
     {
         (*out)->value = REGISTER_INDEX(token);
         (*out)->type = REGISTER;
     }
-    else if(IS_ARRAY(token))
+    else if(IS_ARRAY(token)) /* Array type address */
     {
         TRY_THROW(tok_to_array(step_one, token, (*out)));
     }
-    else if(is_valid_tag(token))
+    else if(is_valid_tag(token)) /* Direct type address */
     {
         symbol *sym;
         if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property.prop == MACRO_SYM)
@@ -205,6 +219,7 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
     return OK;
 }
 
+/* Clean the arguments string  and validate the use of quotes */
 ErrorCode get_string_arg(step_one *step_one, char **str_ref)
 {
     char *args_str = step_one->curr_statement->args;
@@ -228,10 +243,19 @@ ErrorCode get_string_arg(step_one *step_one, char **str_ref)
     return OK;
 }
 
+/* Clean the token end check if it is valid tag */
+ErrorCode get_label_arg(step_one *step_one, char **label)
+{
+    *label = step_one->curr_statement->args;
+    clean_token(label);
+    return is_valid_tag(*label);
+}
+
 /********************/
-/***** Privates *****/
+/*     Privates     */
 /********************/
 
+/* Match statement_key_str to instruction type and put the result in statement_ref */
 ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 {
     static Translation translations[] = 
@@ -264,6 +288,7 @@ ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
     return OK;
 }
 
+/* Match the statement key str to operation string and put in the statement struct the result */
 ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 {
     static Translation translations[] = 
@@ -318,7 +343,8 @@ ErrorCode strtok_wrapper(step_one *step_one, char **token_ref)
     return OK;
 }
 
-ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
+/* Parse token to numer,  */
+ErrorCode tok_to_num(step_one *step_one, char *token, word *out)
 {
     char *end_str;  /* The pointer to the string after the parsed number */
     symbol *sym;
@@ -328,11 +354,11 @@ ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
 
     if((sym && sym->property.prop == MACRO_SYM))
     {
-        *num_ref = sym->value;
+        *out = sym->value;
     }
     else
     {
-        *num_ref = strtol(token, &end_str, 10);
+        *out = strtol(token, &end_str, 10);
 
         /* If there is any character after the read number, that mean that the token didn't containd just a number */
         if(IS_EMPTY_STR(end_str) == FALSE)
@@ -343,6 +369,7 @@ ErrorCode tok_to_num(step_one *step_one, char *token, word *num_ref)
     return  OK;
 }
 
+/* Parse token to array and put the result in address_ref */
 ErrorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
 {
     char *index_token; /* The string which represent the index */
@@ -370,4 +397,21 @@ ErrorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
     TRY_THROW((address_ref->value < 0) ? NOT_ARRAY_INDEX : OK);
 
     return OK;
+}
+
+/* Advence the pointer to the token by one for each white space found,
+and put '\0' in the last white space found from the end */
+void clean_token(char **token_ref)
+{
+    str_len_t i;
+
+    /* Clean the leading white spaces */
+    IGNORE_WHITE_SPACES(*token_ref);
+
+    /* Check if every character in the token was white space, if not, clean trailing white spaces */
+    if(IS_EMPTY_STR(*token_ref) == FALSE)
+    {
+        for(i = strlen(*token_ref) - 1; i >= 0 && IS_WHITESPACE((*token_ref)[i]); i--);
+        (*token_ref)[i + 1] = '\0';
+    }
 }

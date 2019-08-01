@@ -83,8 +83,8 @@ void step_two_run(assembler *assembler)
 
     puts("Start step two");
 
-    entries = initilize_queue(sizeof(symbol));
-    externals = initilize_queue(sizeof(symbol));
+    entries = queue_new(sizeof(symbol));
+    externals = queue_new(sizeof(symbol));
 
     curr_sym = next_symbol(assembler->symbols_table);
     while((curr_sym))
@@ -123,12 +123,12 @@ void step_two_run(assembler *assembler)
     if(!IS_EMPTY_QUEUE(entries))
     {
         append_entries(assembler, entries);
-        free_queue(entries);
+        queue_free(entries);
     }
     if(!IS_EMPTY_QUEUE(externals))
     {
         append_externals(assembler, externals);
-        free_queue(externals);
+        queue_free(externals);
     }
     /* free_symbols_table(assembler->symbols_table); */
 }

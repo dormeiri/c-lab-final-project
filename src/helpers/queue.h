@@ -26,7 +26,7 @@ Parameters:
 Return:         The head of the initialized queue
 Exceptions:     Exit if couldn't allocate memory for the queue
 */
-Queue *initilize_queue(size_t node_size);
+Queue *queue_new(size_t node_size);
 
 /*
 Description:    Enqueue new node into queue
@@ -50,6 +50,6 @@ Description:    Free queue
 Parameters:
     queue:      Pointer to a queue
 */
-void free_queue(Queue *q);
+void queue_free(Queue *q); /* TODO: Important! this does not free nested allocated memory! we need to do generic free function as a a parameter and free the obejcts there */
 
 #endif

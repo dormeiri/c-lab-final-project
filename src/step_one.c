@@ -317,7 +317,7 @@ statement *create_statement()
     {
         exit(EXIT_FAILURE);
     }
-    result->image_line->addresses = initilize_queue(sizeof(address));
+    result->image_line->addresses = queue_new(sizeof(address));
 
     return result;
 }
@@ -334,7 +334,7 @@ void free_step_one_objs(step_one *step_one)
             {
                 if(step_one->curr_statement->image_line->addresses)
                 {
-                    free_queue(step_one->curr_statement->image_line->addresses);
+                    queue_free(step_one->curr_statement->image_line->addresses);
                     free(step_one->curr_statement->image_line->addresses);
                 }
 

@@ -1,7 +1,7 @@
 #include <string.h>
 #include "queue.h"
 
-Queue *initilize_queue(size_t data_size)
+Queue *queue_new(size_t data_size)
 {
     Queue *new_queue = (Queue *)malloc(sizeof(Queue));
     new_queue->head = NULL;
@@ -11,7 +11,7 @@ Queue *initilize_queue(size_t data_size)
     return new_queue;
 }
 
-void free_queue(Queue *Queue)
+void queue_free(Queue *Queue)
 {
     QueueNode *temp;
     while((temp = Queue->head))
