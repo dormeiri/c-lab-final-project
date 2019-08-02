@@ -176,7 +176,7 @@ symbol *create_symbol(const char *name, symbolProperty prop)
     }
 
     result->usages = list_new();
-    strncpy(result->symbol_name, name, MAX_TAG_LEN);
+    strcpy(result->symbol_name, name);
     result->property.prop = prop;
     result->property.ent = 0;
 
@@ -238,7 +238,7 @@ void symbol_queue_free(Queue *q)
 {
     symbol *temp;
     while((temp = dequeue(q)))
-    {
+    {        
         symbol_free(temp);   
     }
     queue_free(q);

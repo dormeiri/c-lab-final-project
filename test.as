@@ -1,4 +1,4 @@
-.define x=7
+.define x              =1
 
 #Declared after usage
 mov C, B[x]
