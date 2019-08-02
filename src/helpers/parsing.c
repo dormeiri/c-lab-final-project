@@ -67,7 +67,7 @@ typedef struct Translation
 /* Read statment first word into DEST */
 #define READ_FIRST_WORD(STR, DEST)\
     DEST = STR;\
-    for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR) || *STR == TAG_END) == FALSE; STR++)
+    for(;!(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR) || *STR == TAG_END); STR++)
 
 /* Read statement second word into DEST */
 #define READ_SECOND_WORD(STR, DEST)\
@@ -105,13 +105,14 @@ ErrorCode map_statement(step_one *step_one)
         statement->statement_type = EMPTY_KEY;
         return OK;
     }
-
     READ_FIRST_WORD(statement_line, statement->tag);
     if(*statement_line == TAG_END) /* Has tag */
     {
         SPLIT_STR(statement_line);
         IGNORE_WHITE_SPACES(statement_line);
-        READ_SECOND_WORD(statement_line, statement_key);
+    
+        statement_key = statement_line;
+        for(;!(IS_EMPTY_STR(statement_line) || IS_WHITESPACE(*statement_line)); statement_line++);
     }
     else
     {
@@ -120,40 +121,38 @@ ErrorCode map_statement(step_one *step_one)
     }
     
     /* Split instruction string and arguments string */
-    if(IS_EMPTY_STR(statement_line) == FALSE)
+    if(!(IS_EMPTY_STR(statement_line)))
     {
+
         SPLIT_STR(statement_line);
         IGNORE_WHITE_SPACES(statement_line);
     }
+
     statement->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
 
     TRY_THROW(map_statement_key(statement_key, statement));
+    TRY_THROW(preaction_validations(statement->args));
     return OK;
 }
 
-/* Parse macro statement by splitting the results by MACRO_SET_CHAT */
+/* Parse macro statement by splitting the results on MACRO_SET_CHAT */
 ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 {
-    /* TODO: Break down to smaller funcitons, try to remove duplicates */
-
-    char *args_str;
-
-    args_str = step_one->curr_statement->args;
+    char *args_str = step_one->curr_statement->args;
+    
     IGNORE_WHITE_SPACES(args_str);
-    *symbol = args_str;
-    for(;!(IS_EMPTY_STR(args_str) || IS_WHITESPACE(*args_str) || *args_str == MACRO_SET_CHAR); args_str++);
-    IGNORE_WHITE_SPACES(args_str);
-    if(*args_str != MACRO_SET_CHAR)
-    {
-        return INVALID_MACRO_STATEMENT;
-    }
+    *symbol = args_str; 
 
-    SPLIT_STR(args_str);
+    /* Skip to MACRO_SET_CHAR */
+    for(;!(IS_EMPTY_STR(args_str) || *args_str == MACRO_SET_CHAR); args_str++);    
+
+    TRY_THROW(IS_EMPTY_STR(args_str) ? INVALID_MACRO_STATEMENT : OK); /* Check if MACRO_SET_CHAR wasn't found */
+
+    SPLIT_STR(args_str); /* Split on MACRO_SET_CHAR */
     clean_token(symbol);
     clean_token(&args_str);
 
     TRY_THROW(IS_EMPTY_STR(args_str) ? MISSING_PARAM : OK);
-
     TRY_THROW(tok_to_num(step_one, args_str, value));
 
     return OK;
@@ -214,12 +213,11 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
     {
         return INVALID_ADDRESS;
     }
-    
 
     return OK;
 }
 
-/* Clean the arguments string  and validate the use of quotes */
+/* Clean the arguments string and validate the use of quotes */
 ErrorCode get_string_arg(step_one *step_one, char **str_ref)
 {
     char *args_str = step_one->curr_statement->args;
@@ -294,6 +292,7 @@ ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
     static Translation translations[] = 
     {
         {"mov", MOV_OP},
+        {"cmp", CMP_OP},
         {"add", ADD_OP},
         {"sub", SUB_OP},
         {"not", NOT_OP},
@@ -311,8 +310,8 @@ ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
         {NULL, NONE_OP}
     };
     unsigned char i;
-
-    for(i = 0; strcmp(translations[i].str, statement_key_str); i++);
+        
+    for(i = 0; translations[i].str && strcmp(translations[i].str, statement_key_str); i++);
     if(translations[i].str == NULL)
     {
         return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */

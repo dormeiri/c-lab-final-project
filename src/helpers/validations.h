@@ -3,12 +3,13 @@
 
 #include "error.h"
 
-/*  Description:    Check if the token is valid tag
+/*  Description:    Check for bad chars at the beginning of arguments string
 *   Params:
-*       - token:    The token to check
-*   Return:         If not validate return the invlid reason with error code, otherwise OK
+*       - args_str: The arguments string to check
+*   Return:         If invalid chars found, return error code, otherwise, return OK
 */
-ErrorCode is_valid_tag(char *token);
+ErrorCode preaction_validations(char *args_str);
+
 
 /*  Description:    After a token is cleaned, validate that the token is valid
 *   Parameters:
@@ -24,5 +25,16 @@ ErrorCode check_cleaned_token(char *token);
 */
 ErrorCode check_token_consecutive(char *token);
 
+/*  Description:    Check if the token is valid tag
+*   Params:
+*       - token:    The token to check
+*   Return:         If not validate return the invlid reason with error code, otherwise OK
+*/
+ErrorCode is_valid_tag(char *token);
+
+/*  Description:    Check for extraneous text after finish using arguments string (it use strtok(NULL,...) to do that)
+*   Return:         If extraneous text found, return error code, otherwise OK
+*/
+ErrorCode postparsing_validations();
 
 #endif

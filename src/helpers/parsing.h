@@ -16,7 +16,7 @@
 #define IS_WHITESPACE(CHAR) ((CHAR) == WHITE_SPACE_1 || (CHAR) == WHITE_SPACE_2)
 
 /* Check whether a string is empty */
-#define IS_EMPTY_STR(STR)   (*(STR) == '\0')
+#define IS_EMPTY_STR(STR)   (!(STR) || !(*(STR)))
 
 /* 
 * Go to the first non whitespace char 
