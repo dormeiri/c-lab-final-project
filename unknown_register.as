@@ -2,11 +2,11 @@
 .extern W
 .define sz = 2
 
-MAIN:   mov     r3,LIST[sz]
-LOOP:   jmp     W
-        prn     #-5
-        mov     STR[5], STR[2]
-        sub     r1, r3
+MAIN:   mov     r+1,r-1
+LOOP:   jmp     r8
+        prn     rsz
+        mov     r0, r7
+        sub     r00, r01
         cmp     K, #sz
         bne     W
 L1:     inc     L3

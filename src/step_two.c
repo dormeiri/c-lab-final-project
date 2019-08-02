@@ -119,16 +119,18 @@ void step_two_run(assembler *assembler)
         curr_sym = next_symbol(NULL);
     }
 
-    files_frecopy(assembler);
-    if(!IS_EMPTY_QUEUE(entries))
+    if((assembler->succeed))
     {
-        append_entries(assembler, entries);
-        symbol_queue_free(entries);
+        files_frecopy(assembler);
+        if(!IS_EMPTY_QUEUE(entries))
+        {
+            append_entries(assembler, entries);
+            symbol_queue_free(entries);
+        }
+        if(!IS_EMPTY_QUEUE(externals))
+        {
+            append_externals(assembler, externals);
+            symbol_queue_free(externals);
+        }
     }
-    if(!IS_EMPTY_QUEUE(externals))
-    {
-        append_externals(assembler, externals);
-        symbol_queue_free(externals);
-    }
-    /* free_symbols_table(assembler->symbols_table); */
 }

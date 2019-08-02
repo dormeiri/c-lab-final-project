@@ -43,20 +43,10 @@ typedef struct Translation
 /* Indicate register */
 #define REGISTER_CHAR 'r'
 
-/* Get register number */
-#define REGISTER_INDEX(STR) ((STR)[1] - '0') /* TODO: Assumption is made here: no more than 10 registers, maybe shuold be changed */
-
-/* Check if string is comment */
 #define IS_COMMENT(STR) (*(STR) == COMMENT_CHAR)
 
 /* Check if the string represent a number */
 #define IS_NUM_FIRST_CHAR(STR) (isdigit((STR)[0]) || (STR)[0] == '-' || (STR)[0] == '+')
-
-/* Check if string is register */
-#define IS_REGISTER(STR) (STR[0] == REGISTER_CHAR && STR[1] != '\0' && STR[2] == '\0')
-
-/* Check if string is valid register */ /* TODO: Assumption is made here: no more than 10 registers, maybe shuold be changed */
-#define IS_VALID_REGISTER(STR) (IS_REGISTER(STR) && REGISTER_INDEX(STR) >= 0 && REGISTER_INDEX(STR) < NUM_OF_REGISTERS && (STR)[2] == '\0')
 
 /* Check if string is array */
 #define IS_ARRAY(STR) (strchr((STR), '['))
@@ -186,9 +176,9 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
         TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
         (*out)->type = INSTANT;
     }
-    else if(IS_VALID_REGISTER(token)) /* Register type address */
+    else if(parse_register(token, &(*out)->value)) /* Register type address */
     {
-        (*out)->value = REGISTER_INDEX(token);
+        TRY_THROW(((*out)->value >= NUM_OF_REGISTERS || (*out)->value < 0) ? OUT_OF_RANGE_REGISTER : OK);
         (*out)->type = REGISTER;
     }
     else if(IS_ARRAY(token)) /* Array type address */
@@ -249,6 +239,50 @@ ErrorCode get_label_arg(step_one *step_one, char **label)
     return is_valid_tag(*label);
 }
 
+/* Find the matching operationType of a string */
+operationType parse_operation_type(const char *str)
+{
+    static Translation translations[] = 
+    {
+        {"mov", MOV_OP},
+        {"cmp", CMP_OP},
+        {"add", ADD_OP},
+        {"sub", SUB_OP},
+        {"not", NOT_OP},
+        {"clr", CLR_OP},
+        {"lea", LEA_OP},
+        {"inc", INC_OP},
+        {"dec", DEC_OP},
+        {"jmp", JMP_OP},
+        {"bne", BNE_OP},
+        {"red", RED_OP},
+        {"prn", PRN_OP},
+        {"jsr", JSR_OP},
+        {"rts", RTS_OP},
+        {"stop", STOP_OP},
+        {NULL, NONE_OP}
+    };
+    unsigned char i;
+        
+    for(i = 0; translations[i].str && strcmp(translations[i].str, str); i++);
+    return translations[i].type;
+}
+
+/* Check if the string starts with 'r' if yes parse number comes after, but of the number starts with 0 then it must be 0,
+for example r01 is not allowed */
+boolean parse_register(const char *token, word *out)
+{
+    char *end_str;
+    if((token[0] != REGISTER_CHAR) || ((token[1] == '0') && (token[2])))
+    {
+        return FALSE;
+    }
+    *out = strtol(token + 1, &end_str, 10);
+
+    /* If there is any character after the read number, that mean that the token didn't containd just a number */
+    return IS_EMPTY_STR(end_str) ? TRUE : FALSE;
+}
+
 /********************/
 /*     Privates     */
 /********************/
@@ -289,34 +323,14 @@ ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 /* Match the statement key str to operation string and put in the statement struct the result */
 ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 {
-    static Translation translations[] = 
+    operationType op;
+
+    op = parse_operation_type(statement_key_str);
+    if(op == NONE_OP)
     {
-        {"mov", MOV_OP},
-        {"cmp", CMP_OP},
-        {"add", ADD_OP},
-        {"sub", SUB_OP},
-        {"not", NOT_OP},
-        {"clr", CLR_OP},
-        {"lea", LEA_OP},
-        {"inc", INC_OP},
-        {"dec", DEC_OP},
-        {"jmp", JMP_OP},
-        {"bne", BNE_OP},
-        {"red", RED_OP},
-        {"prn", PRN_OP},
-        {"jsr", JSR_OP},
-        {"rts", RTS_OP},
-        {"stop", STOP_OP},
-        {NULL, NONE_OP}
-    };
-    unsigned char i;
-        
-    for(i = 0; translations[i].str && strcmp(translations[i].str, statement_key_str); i++);
-    if(translations[i].str == NULL)
-    {
-        return UNDEFINED_COMMAND; /* TODO: Undefined statement key? undefined operation? */
+        return UNDEFINED_COMMAND;
     }
-    statement_ref->operation_type = translations[i].type;
+    statement_ref->operation_type = op;
 
     return OK;
 }

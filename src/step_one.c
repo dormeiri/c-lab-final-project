@@ -129,6 +129,7 @@ ErrorCode enqueue_string_address(step_one *step_one, const char *str)
         {
             exit(EXIT_FAILURE);
         }
+        temp_address->symbol_name = NULL;
         temp_address->value = *str;
         temp_address->type = INSTANT;
         enqueue(step_one->curr_statement->image_line->addresses, temp_address);
@@ -239,7 +240,7 @@ word get_operand_word(address *operand)
 
 ErrorCode append_image_lines(step_one *step_one)
 {
-    address *curr_address;
+    address *curr_address;  
     while((curr_address = (address *)dequeue(step_one->curr_statement->image_line->addresses)))
     {
         if(curr_address->symbol_name)

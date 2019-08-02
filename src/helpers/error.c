@@ -144,6 +144,7 @@ const char *error_msg(ErrorCode code)
         case NOT_ARRAY_INDEX: return "Invalid array index";
         case ENTRY_ALREADY_EXISTS: return "Entry already declared";
         case UNUSED_SYMBOL: return "Symbol declared but never used";
+        case OUT_OF_RANGE_REGISTER: return "Unknown register";
         default: return NULL;
     }
 }

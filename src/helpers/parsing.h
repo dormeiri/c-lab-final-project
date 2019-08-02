@@ -66,4 +66,15 @@ ErrorCode get_string_arg(step_one *step_one, char **out);
 */
 ErrorCode get_label_arg(step_one *step_one, char **out);
 
+
+/*  Description:    Find the matching operationType of the string str
+*   Params:
+*       - str:      The string to match
+*   Return:         The matching operationType of this string str
+*/
+operationType parse_operation_type(const char *str);
+
+
+boolean parse_register(const char *token, word *out);
+
 #endif

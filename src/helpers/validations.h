@@ -30,7 +30,7 @@ ErrorCode check_token_consecutive(char *token);
 *       - token:    The token to check
 *   Return:         If not validate return the invlid reason with error code, otherwise OK
 */
-ErrorCode is_valid_tag(char *token);
+ErrorCode is_valid_tag(const char *token);
 
 /*  Description:    Check for extraneous text after finish using arguments string (it use strtok(NULL,...) to do that)
 *   Return:         If extraneous text found, return error code, otherwise OK

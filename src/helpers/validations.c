@@ -10,8 +10,6 @@
 then check if the first character in args_str is DELIM_CHAR */
 ErrorCode preaction_validations(char *args_str)
 {
-    
-
     if(!IS_EMPTY_STR(args_str) && *args_str == DELIM_CHAR)
     {
         return ILLEGAL_COMMA;
@@ -46,13 +44,19 @@ ErrorCode check_token_consecutive(char *token)
     return OK;
 }
 
-ErrorCode is_valid_tag(char *token)
+ErrorCode is_valid_tag(const char *token)
 {
+    word temp;
     char i = 1;
 
-    /* TODO: Add reserved words validations */
+    if((parse_register(token, &temp)) || parse_operation_type(token) != NONE_OP)
+    {
+        return INVALID_TAG;
+    }
+
     TRY_THROW(isalpha(*token));
-    for(token++; i > MAX_TAG_LEN || isalnum(*token); token++, i++);
+    for(token++; i >= MAX_TAG_LEN || isalnum(*token); token++, i++);
+    
     return *token ? INVALID_TAG : OK;
 }
 
