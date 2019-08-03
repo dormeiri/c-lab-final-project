@@ -2,7 +2,7 @@
 .extern W
 .define sz = 2
 
-R0:   mov     r3,LIST[sz]
+r0:   mov     r3,LIST[sz]
 R14:   jmp     W
         prn     #-5
         mov     STR[5], STR[2]

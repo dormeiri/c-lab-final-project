@@ -131,6 +131,12 @@ typedef enum ErrorCode
     /* Token looks like register but the register is not defined in the machine */
     OUT_OF_RANGE_REGISTER = 26,
 
+    /* Argument expected to be in a speceific type but appeared as different type */
+    INVALID_ARGUMENT = 27,
+
+    /* Too many data objects declared */
+    DATA_OVERFLOW = 28,
+
     /** Warnings **/
 
     /* Symbol declared but never used */

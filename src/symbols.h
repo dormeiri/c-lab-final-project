@@ -11,10 +11,10 @@ symbol *next_symbol(symbols_table *tab);
 
 ErrorCode add_entry_declaration(symbols_table *tab, const char *symbol_name);
 
-ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value);
+ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value, int declaration_index);
 
 /* TODO: Make it use struct */
-ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, long address_index);
+ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, int address_index);
 
 /* Search the given symbol name in the symbol table and return the symbol */
 symbol *find_symbol(symbols_table *tab, const char *symbol_name);

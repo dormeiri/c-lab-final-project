@@ -33,6 +33,7 @@ typedef struct
     char *curr_line_copy; /* line to print if any error occured */
     statement *curr_statement;
     assembler *assembler;
+    Queue *data_image;
 } step_one;
 
 void run_step_one(assembler *assembler);

@@ -70,7 +70,7 @@ ErrorCode files_read_line(assembler *as, char **out);
 *       - address_index:    The index of the address which the line represents
 *       - value:            The value of the address which the line represents
 */
-void files_write_address(assembler *as, long address_index, word value);
+void files_write_address(assembler *as, int address_index, word value);
 
 /*
 *   Description:        Update symbol value of symbol which was unknown until now

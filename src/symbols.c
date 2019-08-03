@@ -78,15 +78,15 @@ ErrorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
     else
     {
         sptr = install(tab, create_symbol(symbol_name, UNKNOWN_SYM));
+        sptr->value->value = 0;
     }
     
     sptr->value->property.ent = 1;
-    sptr->value->value = 0;
 
     return OK;
 }
 
-ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value)
+ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value, int declaration_index)
 {
     word_converter w;
     symbol_list *sptr;
@@ -121,12 +121,13 @@ ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, sy
             break;
     }
     
+    sptr->value->declaration_index = declaration_index;
     sptr->value->value = w.raw;
 
     return OK;
 }
 
-ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, long address_index)
+ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, int address_index)
 {
     symbol_list *sptr;
     symbol_usage *result;
@@ -179,6 +180,7 @@ symbol *create_symbol(const char *name, symbolProperty prop)
     strcpy(result->symbol_name, name);
     result->property.prop = prop;
     result->property.ent = 0;
+    result->value = 0;
 
     return result;
 }

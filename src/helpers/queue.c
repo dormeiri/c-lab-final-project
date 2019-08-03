@@ -7,6 +7,7 @@ Queue *queue_new(size_t data_size)
     new_queue->head = NULL;
     new_queue->tail = NULL;
     new_queue->data_size = data_size;
+    new_queue->counter = 0;
 
     return new_queue;
 }
@@ -42,6 +43,8 @@ void enqueue(Queue *Queue, void *value_ref)
     {
         Queue->tail = Queue->tail->next = new_node;
     }
+
+    Queue->counter++;
 }
 
 void *dequeue(Queue *Queue)
@@ -64,6 +67,8 @@ void *dequeue(Queue *Queue)
     }
 
     free(removed_node);
+
+    Queue->counter--;
 
     return result;
 }

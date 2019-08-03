@@ -153,6 +153,7 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
 {
     char *token;
 
+
     if(!(*out = (address *)malloc(sizeof(address))))
     {
         exit(EXIT_FAILURE);
@@ -165,6 +166,11 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
     step_one->curr_statement->args = NULL;
     (*out)->symbol_name = NULL;
 
+    if(step_one->curr_statement->statement_type == DATA_KEY)
+    {
+        TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
+        (*out)->type = INSTANT;
+    }
     if(IS_NUM_FIRST_CHAR(token)) /* Data type address */
     {
         TRY_THROW(tok_to_num(step_one, token, &(*out)->value));
@@ -359,22 +365,29 @@ ErrorCode strtok_wrapper(step_one *step_one, char **token_ref)
 /* Parse token to numer,  */
 ErrorCode tok_to_num(step_one *step_one, char *token, word *out)
 {
-    char *end_str;  /* The pointer to the string after the parsed number */
+    char *end_str = NULL;  /* The pointer to the string after the parsed number */
     symbol *sym;
 
-    /* If the token is macro then take the value from the token, otherwise parse the token string to number */
-    sym = find_symbol(step_one->assembler->symbols_table, token);
-
-    if((sym && sym->property.prop == MACRO_SYM))
+    if(isalpha(token[0]))
     {
-        *out = sym->value;
+        /* If the token is macro then take the value from the token, otherwise parse the token string to number */
+        sym = find_symbol(step_one->assembler->symbols_table, token);
+        if((sym && sym->property.prop == MACRO_SYM))
+        {
+            *out = sym->value;
+        }
+        else
+        {
+            return INVALID_ARGUMENT;
+        }
+        
     }
     else
     {
         *out = strtol(token, &end_str, 10);
 
         /* If there is any character after the read number, that mean that the token didn't containd just a number */
-        if(IS_EMPTY_STR(end_str) == FALSE)
+        if(!IS_EMPTY_STR(end_str))
         {
             return NOT_WORD_NUM;
         }

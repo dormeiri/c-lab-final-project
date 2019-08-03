@@ -17,6 +17,7 @@ typedef struct Queue
     QueueNode *head;
     QueueNode *tail;
     size_t data_size;
+    unsigned long counter;
 } Queue;
 
 #define IS_EMPTY_QUEUE(QREF) (!(QREF) || (QREF)->head == NULL)

@@ -27,6 +27,8 @@ void files_frecopy(assembler *assembler)
     FILE *fp = NULL;
 
     files_get_output(assembler, OBJECT_FILE, &fp);
+
+    fprintf(fp, "%d %d\n", assembler->ic, assembler->dc);
     file_copy(assembler->output_fp, fp);
     fclose(fp);
     fclose(assembler->output_fp);
@@ -75,11 +77,11 @@ ErrorCode files_read_line(assembler *assembler, char **out)
     return fgets_wrapper(assembler->input_fp, out);
 }
 
-void files_write_address(assembler *assembler, long address_index, word value)
-{
-    fprintf(assembler->output_fp, "%ld\t%s\n", address_index, convert_to_base4(value));
-}
 
+void files_write_address(assembler *as, int address_index, word value)
+{
+    fprintf(as->output_fp, "%04d %s\n", address_index, convert_to_base4(value));
+}
 
 /******************/
 /*    Privates    */
@@ -90,7 +92,6 @@ void file_copy(FILE *source, FILE *dest)
     char c;
 
     rewind(source);
-    rewind(dest);
     while((c = fgetc(source)) != EOF)
     {
         putc(c, dest);

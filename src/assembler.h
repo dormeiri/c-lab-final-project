@@ -77,7 +77,13 @@ typedef union
         word are : 2;
         word value : 12;
     } operand_word;
-    
+
+    struct
+    {
+        word are : 2;
+        word dest : 3;
+        word source : 3;
+    } register_word;
 } word_converter;
 
 
@@ -86,8 +92,8 @@ that the word started to load in), or external (there's an external source that 
 typedef enum
 {
     A_ARE = 0,/*00 */
-    R_ARE = 1,/*01 */
-    E_ARE = 2 /*10 */
+    R_ARE = 2,/*01 */
+    E_ARE = 1 /*10 */
 } are;
 
 typedef enum
@@ -154,13 +160,15 @@ typedef enum
 
 typedef struct
 {
-    long address_index;
+    int address_index;
     long file_pos;
     long line_num;
     char *line_str;
 } symbol_usage;
 typedef struct 
 {
+    /* TODO: add declaration address index */
+    int declaration_index;
     char *symbol_name;
     struct
     {
@@ -190,6 +198,8 @@ typedef struct
     FILE *output_fp;                /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
     symbols_table *symbols_table;
     boolean succeed;
+    word ic;
+    word dc;
 } assembler;
 
 

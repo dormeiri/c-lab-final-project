@@ -17,19 +17,13 @@ static void append_entries(assembler *assembler, Queue *entries)
 {
     FILE *fp;
     symbol *curr_sym;
-    symbol_usage *sym_usage;
-
-    /* TODO: Very similar to append_external, exactly the same logic but different ouput file and different queue name, should be generic*/
 
     if(assembler->succeed)
     {
         files_get_output(assembler, ENTRY_FILE, &fp);
         while((curr_sym = (symbol *)dequeue(entries)))
         {
-            while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
-            {
-                fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
-            }
+            fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, curr_sym->declaration_index);
             symbol_free(curr_sym);
         }
     }
@@ -54,7 +48,7 @@ static void append_externals(assembler *assembler, Queue *externals)
         {
             while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
             {
-                fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
+                fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, sym_usage->address_index);
             }
             symbol_free(curr_sym);
         }

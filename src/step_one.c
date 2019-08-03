@@ -4,6 +4,8 @@
 #include "helpers/files.h"
 #include "helpers/parsing.h"
 
+#define DATA_SIZE 100
+
 /* TODO: Organize, maybe split into smaller files */
 
 static word get_operand_word(address *operand);
@@ -20,6 +22,7 @@ static void create_step_one_error(step_one *step_one, ErrorCode ErrorCode, const
 /* Translate the current image_line of the current statement in step_one and append the addresses to the file */
 static ErrorCode append_line(step_one *step_one);
 static ErrorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line);
+static void append_data_image(step_one *step_one);
 
 
 
@@ -43,7 +46,11 @@ void run_step_one(assembler *assembler)
         step_one->line_counter++;
         free_step_one_objs(step_one);
     }
+
+    append_data_image(step_one);
     fclose(assembler->input_fp);
+    queue_free(step_one->data_image);
+    free(step_one->data_image);
     free(step_one);
 }
 
@@ -80,7 +87,7 @@ boolean step_one_line_algo(step_one *step_one)
         temp_str = step_one->curr_statement->tag;
         temp_value = step_one->address_index;
         /* TODO: Make it shorter */
-        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value), NULL);
+        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, get_symbol_property(step_one->curr_statement), temp_value, step_one->address_index), NULL);
     }
 
     switch (step_one->curr_statement->statement_type)
@@ -88,21 +95,21 @@ boolean step_one_line_algo(step_one *step_one)
         case MACRO_KEY:
             TRY_THROW_S1(step_one->curr_statement->tag ? INVALID_COMB_LABEL_MACRO : OK, NULL);
             TRY_THROW_S1(parse_macro_statement(step_one, &temp_str, &temp_value), NULL);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value, step_one->address_index), NULL);
             return TRUE;
 
         case EXTERN_KEY:
             get_label_arg(step_one, &temp_str);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0, step_one->address_index), NULL);
             break;
 
         case ENTRY_KEY:
             get_label_arg(step_one, &temp_str);
             TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str), NULL);
+            break;
 
-        case OPERATION_KEY:
         case DATA_KEY:
-            
+        case OPERATION_KEY:
             while((res = enqueue_address(step_one)) == OK);
             TRY_THROW_S1(res == MISSING_PARAM ? OK : res, NULL);
             TRY_THROW_S1(append_line(step_one), NULL);
@@ -128,9 +135,18 @@ ErrorCode enqueue_address(step_one *step_one)
 {
     ErrorCode res;
     address *curr_address;
+
     if((res = get_next_arg(step_one, &curr_address)) == OK)
     {
-        enqueue(step_one->curr_statement->image_line->addresses, curr_address);
+        if(step_one->curr_statement->statement_type == DATA_KEY)
+        {
+            TRY_THROW(step_one->data_image->counter == DATA_SIZE ? DATA_OVERFLOW : OK);
+            enqueue(step_one->data_image, curr_address);
+        }
+        else
+        {
+            enqueue(step_one->curr_statement->image_line->addresses, curr_address);
+        }
     }
     return res;
 }
@@ -138,7 +154,10 @@ ErrorCode enqueue_address(step_one *step_one)
 ErrorCode enqueue_string_address(step_one *step_one, const char *str)
 {
     address *temp_address;
-    for(; *str; str++)
+
+    TRY_THROW(step_one->data_image->counter == DATA_SIZE ? DATA_OVERFLOW : OK);
+
+    do
     {
         if(!(temp_address = (address *)malloc(sizeof(temp_address))))
         {
@@ -147,8 +166,8 @@ ErrorCode enqueue_string_address(step_one *step_one, const char *str)
         temp_address->symbol_name = NULL;
         temp_address->value = *str;
         temp_address->type = INSTANT;
-        enqueue(step_one->curr_statement->image_line->addresses, temp_address);
-    }
+        enqueue(step_one->data_image, temp_address);
+    } while ((*str++));
     return OK;
 }
 
@@ -217,38 +236,64 @@ ErrorCode append_line(step_one *step_one)
                      or indicates weather there are too many operands or less than requied.*/
 ErrorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line)
 {
-    word_converter w;
-    QueueNode *nptr;
+    word_converter operation_word;
+    Queue *raw_queue;
+    Queue *verified_queue;
     char num_of_operands;
     address *curr_address;
+    address *last_address;
 
-    w.raw = 0;
-    w.operation_word.op_code = operation_type;
+    raw_queue = image_line->addresses;
+    verified_queue = queue_new(sizeof(address));
+
+    operation_word.raw = 0;
+    operation_word.operation_word.op_code = operation_type;
 
     num_of_operands = operation_operands(operation_type);
-    nptr = image_line->addresses->head;
-    while(num_of_operands--)
+
+    switch (num_of_operands)
     {
-        TRY_THROW((nptr) ? OK : MISSING_PARAM);
-        curr_address = ((address *)(nptr->data));
-        if(w.operation_word.address_src)
-        {
-            w.operation_word.address_dest = curr_address->type;
-        }
-        else
-        {
-            w.operation_word.address_src = curr_address->type;
-        }
-        
-        curr_address->value = get_operand_word(curr_address);
-        nptr = nptr->next;
+        case 2:
+            TRY_THROW((curr_address = (address *)dequeue(raw_queue)) ? OK : MISSING_PARAM);
+            TRY_THROW((operation_type == LEA_OP) && ((curr_address->type) != DIRECT)
+                ? INVALID_ARGUMENT
+                : OK);
+            operation_word.operation_word.address_src = curr_address->type;
+            curr_address->value = get_operand_word(curr_address);
+            enqueue(verified_queue, last_address = curr_address);
+            /* There is no break, it'll continue to case 1 */
+        case 1:
+            TRY_THROW((curr_address = (address *)dequeue(raw_queue)) ? OK : MISSING_PARAM);
+            operation_word.operation_word.address_dest = curr_address->type;
+            curr_address->value = get_operand_word(curr_address);
+            if(curr_address->type == REGISTER && last_address->type == REGISTER)
+            {
+                /* If two register found both in source and destination arguments, they'll share one word */
+                word_converter register_converter;
+                register_converter.raw = 0;
+                register_converter.register_word.dest = curr_address->value;
+                register_converter.register_word.source = last_address->value;
+                last_address->value = register_converter.raw;
+                free(curr_address); /* TODO: address_free */
+            }
+            else
+            {
+                /* If not both of the arguments are register, enqueue to the created queue */
+                enqueue(verified_queue, curr_address);
+            }
+            
+            break;
     }
-    if(nptr) 
+    if(!IS_EMPTY_QUEUE(raw_queue)) 
     {
         return TOO_MANY_OPERANDS;
     }
 
-    files_write_address(step_one->assembler, step_one->address_index++, w.raw);
+    queue_free(raw_queue);
+    free(raw_queue);
+    image_line->addresses = verified_queue;
+
+    files_write_address(step_one->assembler, step_one->address_index++, operation_word.raw);
     append_image_lines(step_one);
 
     return OK;
@@ -274,16 +319,24 @@ word get_operand_word(address *operand)
 
     return w.raw;
 }
-<<<<<<< HEAD
 
-ErrorCode append_image_lines(step_one *step_one)
-=======
+void append_data_image(step_one *step_one)
+{
+    address *temp;
+    step_one->assembler->ic = step_one->address_index - DATA_SIZE;
+    step_one->assembler->dc = step_one->data_image->counter;
+
+    while((temp = dequeue(step_one->data_image)))
+    {
+        files_write_address(step_one->assembler, step_one->address_index++, temp->value);
+    }
+}
+
 /*append image lines writes to the end of the tmp output file the parsed image lines in base "special four"
         Params:
             -step one: -step one: pointer to step one struct consistent with the file that's currently handled
         return: TODO if it returns ONLY 'OK' why not making it void?*/  
-errorCode append_image_lines(step_one *step_one)
->>>>>>> origin/omer
+ErrorCode append_image_lines(step_one *step_one)
 {
     address *curr_address;  
     while((curr_address = (address *)dequeue(step_one->curr_statement->image_line->addresses)))
@@ -358,7 +411,9 @@ step_one *create_step_one(assembler *assembler)
 
     result->assembler = assembler;
     result->line_counter = 1;
-    result->address_index = 100;
+    result->address_index = DATA_SIZE;
+
+    result->data_image = queue_new(sizeof(address));
 
     return result;
 }
@@ -379,6 +434,8 @@ statement *create_statement()
         exit(EXIT_FAILURE);
     }
     result->image_line->addresses = queue_new(sizeof(address));
+    result->tag = NULL;
+    result->args = NULL;
 
     return result;
 }

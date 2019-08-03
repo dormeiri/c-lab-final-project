@@ -99,7 +99,7 @@ void error_write(Error *e, FILE *first_stream, ...)
     for(stream = first_stream; stream; stream = va_arg(ap, FILE *))
     {
         /* Print error message */
-        fprintf(stream, "%s:%d: %s: %s (%d)", e->asm_name, e->line_num, type, error_msg(e->code), e->code);
+        fprintf(stream, "%s:%d: %s: %s (error code: %d)", e->asm_name, e->line_num, type, error_msg(e->code), e->code);
 
         /* If any addition info exists, print it */
         if(e->info)
@@ -143,8 +143,10 @@ const char *error_msg(ErrorCode code)
         case MISSING_ARRAY_BRACE: return "Missing array brace";
         case NOT_ARRAY_INDEX: return "Invalid array index";
         case ENTRY_ALREADY_EXISTS: return "Entry already declared";
+        case INVALID_ARGUMENT: return "Expected different argument type";
         case UNUSED_SYMBOL: return "Symbol declared but never used";
         case OUT_OF_RANGE_REGISTER: return "Unknown register";
+        case DATA_OVERFLOW: return "Data overflow";
         default: return NULL;
     }
 }
