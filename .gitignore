@@ -1,3 +1,5 @@
 .vscode
 *.log
 *.ob
+*.ext
+*.ent

@@ -128,6 +128,9 @@ typedef enum ErrorCode
     /* Entry already declared */
     ENTRY_ALREADY_EXISTS = 25,
 
+    /* Token looks like register but the register is not defined in the machine */
+    OUT_OF_RANGE_REGISTER = 26,
+
     /** Warnings **/
 
     /* Symbol declared but never used */

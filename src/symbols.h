@@ -19,4 +19,11 @@ ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos
 /* Search the given symbol name in the symbol table and return the symbol */
 symbol *find_symbol(symbols_table *tab, const char *symbol_name);
 
+
+void symbol_queue_free(Queue *q);
+
+void symbol_list_free(List *l);
+
+void symbol_free(symbol *s);
+
 #endif

@@ -30,7 +30,7 @@ static void append_entries(assembler *assembler, Queue *entries)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
-            free(curr_sym);
+            symbol_free(curr_sym);
         }
     }
     fclose(fp);
@@ -56,7 +56,7 @@ static void append_externals(assembler *assembler, Queue *externals)
             {
                 fprintf(fp, "%s\t%ld\n", curr_sym->symbol_name, sym_usage->address_index);
             }
-            free(curr_sym);
+            symbol_free(curr_sym);
         }
     }
     fclose(fp);
@@ -95,8 +95,8 @@ void step_two_run(assembler *assembler)
 
     puts("Start step two");
 
-    entries = initilize_queue(sizeof(symbol));
-    externals = initilize_queue(sizeof(symbol));
+    entries = queue_new(sizeof(symbol));
+    externals = queue_new(sizeof(symbol));
 
     curr_sym = next_symbol(assembler->symbols_table);
     while((curr_sym))
@@ -130,16 +130,19 @@ void step_two_run(assembler *assembler)
         }
         curr_sym = next_symbol(NULL);
     }
-    files_frecopy(assembler); /* TODO: Rename */
-    if(!IS_EMPTY_QUEUE(entries))
+
+    if((assembler->succeed))
     {
-        append_entries(assembler, entries);
-        free_queue(entries);
+        files_frecopy(assembler);
+        if(!IS_EMPTY_QUEUE(entries))
+        {
+            append_entries(assembler, entries);
+            symbol_queue_free(entries);
+        }
+        if(!IS_EMPTY_QUEUE(externals))
+        {
+            append_externals(assembler, externals);
+            symbol_queue_free(externals);
+        }
     }
-    if(!IS_EMPTY_QUEUE(externals))
-    {
-        append_externals(assembler, externals);
-        free_queue(externals);
-    }
-    /* free_symbols_table(assembler->symbols_table); */
 }

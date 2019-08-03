@@ -6,47 +6,14 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-ErrorCode is_valid_tag(char *token)
-{
-    char i = 1;
-
-    /* TODO: Add reserved words validations  */
-    /*TODO add an assumption is assembler.c that r165 is an invalid label name  */
-    /*TODO add the assumtions we made throughout the entire file */
-    /*TODO go over the booklet and add ALL assumptions, even the ones they assumed (unluss super obvious) */
-    TRY_THROW(isalpha(*token));
-    for(token++; i > MAX_TAG_LEN || isalnum(*token); token++, i++);
-    return *token ? INVALID_TAG : OK;
-}
-
-
 /* Check if there is DELIM_CHAR in command_str, 
 then check if the first character in args_str is DELIM_CHAR */
-ErrorCode preaction_validations(char *command_str, char *args_str)
+ErrorCode preaction_validations(char *args_str)
 {
-    for(; *command_str != '\0'; command_str++)
-    {
-        if(*command_str == DELIM_CHAR)
-        {
-            return ILLEGAL_COMMA;
-        }
-    }
-
-    if(*args_str == DELIM_CHAR)
+    if(!IS_EMPTY_STR(args_str) && *args_str == DELIM_CHAR)
     {
         return ILLEGAL_COMMA;
     }
-    return OK;
-}
-
-/* Check if strtok is not returning NULL, then it means that there is unexpected DELIM_CHAR in the command line */
-ErrorCode postparsing_validations()
-{
-    if(strtok(NULL, DELIM) != NULL)
-    {
-        return AFTER_TEXT;
-    }
-
     return OK;
 }
 
@@ -77,8 +44,34 @@ ErrorCode check_token_consecutive(char *token)
     return OK;
 }
 
-ErrorCode check_empty_args(char *args_str)
+ErrorCode is_valid_tag(const char *token)
 {
-    IGNORE_WHITE_SPACES(args_str);
-    return IS_EMPTY_STR(args_str);
+    word temp;
+    char i = 1;
+
+    /* TODO: Add reserved words validations  */
+    /*TODO add an assumption is assembler.c that r165 is an invalid label name  */
+    /*TODO add the assumtions we made throughout the entire file */
+    /*TODO go over the booklet and add ALL assumptions, even the ones they assumed (unluss super obvious) */
+
+    if((parse_register(token, &temp)) || parse_operation_type(token) != NONE_OP)
+    {
+        return INVALID_TAG;
+    }
+
+    TRY_THROW(isalpha(*token));
+    for(token++; i >= MAX_TAG_LEN || isalnum(*token); token++, i++);
+    
+    return *token ? INVALID_TAG : OK;
+}
+
+/* Check if strtok is not returning NULL, then it means that there is unexpected DELIM_CHAR in the command line */
+ErrorCode postparsing_validations()
+{
+    if(strtok(NULL, DELIM) != NULL)
+    {
+        return AFTER_TEXT;
+    }
+
+    return OK;
 }

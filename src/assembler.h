@@ -161,7 +161,7 @@ typedef struct
 } symbol_usage;
 typedef struct 
 {
-    const char *symbol_name;
+    char *symbol_name;
     struct
     {
         unsigned int prop : 4;

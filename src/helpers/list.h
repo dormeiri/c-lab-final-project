@@ -1,11 +1,10 @@
-/* TODO:    Change other headers to be like this header 
-*           Header functions prototypes should be like following: X list_func(list *l, ...)
-*           Comments should be like following:
-*\tDescription:\t...
-*\tParams:
-*\t\t-X:\t...
-*\t\t-Y:\t...
-*\tReturn:\t...
+/* 
+*   Documenting:        DONE
+*   Naming:             DONE
+*   Code complexity:    DONE
+*   Unused check:       DONE
+*   Encapsulation:      DONE
+*   Order:              DONE
 */
 
 #ifndef LIST_HEADER
@@ -16,15 +15,15 @@
 /* Generic list node */
 typedef struct ListNode
 {
-    struct ListNode *next; /* The next node in the list */
+    struct ListNode *next;  /* The next node in the list */
     void *data;             /* The generic data of the node */
 } ListNode;
 
 /* Generic list */
 typedef struct
 {
-    ListNode *head;        /* The head of the list */
-    ListNode *tail;        /* The tail of the list */
+    ListNode *head;         /* The head of the list */
+    ListNode *tail;         /* The tail of the list */
 } List;
 
 /*  Description:    Allocate memory and initialize new empty list
@@ -54,6 +53,6 @@ void *list_get_next(List *l);
 *   Params:
 *       - l:        The list to be freed
 */
-void list_free(List *l);
+void list_free(List *l); /* TODO: Important! this does not free nested allocated memory! we need to do generic free function as a a parameter and free the obejcts there */
 
 #endif

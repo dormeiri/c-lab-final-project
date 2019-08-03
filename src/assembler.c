@@ -100,5 +100,5 @@ void free_assembler(assembler *assembler)
 {
     fclose(assembler->input_fp);
     fclose(assembler->output_fp);
-    free(assembler->symbols_table);
+    free_symbols_table(assembler->symbols_table);
 }

@@ -19,18 +19,27 @@ static unsigned hash(const char *symbol_name);
 static symbol_list *install(symbols_table *tab, symbol *sym);
 static symbol_list *lookup(symbols_table *tab, const char *symbol_name);
 static symbol *create_symbol(const char *name, symbolProperty prop);
+void symbol_usages_list_free(List *l);
 
 void free_symbols_table(symbols_table *tab)
 {
-    /* TODO: this makes error, try to fix */
-    /*symbol *temp;
-    symbol *temp2;
-    while((temp = next_symbol(tab)) && (temp2 = next_symbol(tab)))
+    int i = 0;
+    symbol_list *temp;
+
+    for(; i < SYMBOL_HASHSIZE; i++)
     {
-        free(temp);
+        if(((*tab)[i]))
+        {
+            while((temp = (*tab)[i]))
+            {
+                (*tab)[i] = (*tab)[i]->next;
+                free(temp->value);
+                free(temp);
+            }
+            free(((*tab)[i]));
+            (*tab)[i] = NULL;
+        }
     }
-    free(temp);*/
-    free(tab);
 }
 
 symbol *next_symbol(symbols_table *tab)
@@ -155,21 +164,19 @@ symbol *find_symbol(symbols_table *tab, const char *symbol_name)
 symbol *create_symbol(const char *name, symbolProperty prop)
 {
     symbol *result;
-    char *sym_name_buf;
-
-    if(!(sym_name_buf = (char *)malloc((strlen(name) + 1) * sizeof(char))))
-    {
-        exit(EXIT_FAILURE);
-    }
 
     if(!(result = (symbol *)malloc(sizeof(symbol))))
     {
         exit(EXIT_FAILURE);
     }
 
+    if(!(result->symbol_name = ((char *)malloc((strlen(name) + 1) * sizeof(char)))))
+    {
+        exit(EXIT_FAILURE);
+    }
+
     result->usages = list_new();
-    strncpy(sym_name_buf, name, MAX_TAG_LEN);
-    result->symbol_name = sym_name_buf;
+    strcpy(result->symbol_name, name);
     result->property.prop = prop;
     result->property.ent = 0;
 
@@ -225,4 +232,49 @@ unsigned hash(const char *symbol_name)
         hashval = *symbol_name + 31 * hashval;
     }
     return hashval % SYMBOL_HASHSIZE;
+}
+
+void symbol_queue_free(Queue *q)
+{
+    symbol *temp;
+    while((temp = dequeue(q)))
+    {        
+        symbol_free(temp);   
+    }
+    queue_free(q);
+}
+
+void symbol_list_free(List *l)
+{
+    symbol *temp;
+    while((temp = list_get_next(l)))
+    {
+        symbol_free(temp);   
+    }
+    list_free(l);
+}
+
+void symbol_free(symbol *s)
+{
+    if((s->symbol_name))
+    {        
+        free(s->symbol_name);
+    }
+    if((s->usages))
+    {
+        symbol_usages_list_free(s->usages);
+    }
+}
+
+void symbol_usages_list_free(List *l)
+{
+    symbol_usage *temp;
+    while((temp = list_get_next(l)))
+    {
+        if(temp->line_str)
+        {
+            free(temp->line_str);
+        }
+    }
+    list_free(l);
 }
