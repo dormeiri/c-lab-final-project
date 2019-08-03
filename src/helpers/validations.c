@@ -10,7 +10,10 @@ ErrorCode is_valid_tag(char *token)
 {
     char i = 1;
 
-    /* TODO: Add reserved words validations */
+    /* TODO: Add reserved words validations  */
+    /*TODO add an assumption is assembler.c that r165 is an invalid label name  */
+    /*TODO add the assumtions we made throughout the entire file */
+    /*TODO go over the booklet and add ALL assumptions, even the ones they assumed (unluss super obvious) */
     TRY_THROW(isalpha(*token));
     for(token++; i > MAX_TAG_LEN || isalnum(*token); token++, i++);
     return *token ? INVALID_TAG : OK;
