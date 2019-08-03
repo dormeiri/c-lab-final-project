@@ -2,7 +2,9 @@
 #define SYMBOLS_HEADER
 
 #include "assembler.h"
-
+/*free symbols table free up the memory allocated to reserve the symbols found during step one
+    Params:
+        -tab: pointer to the symbol table */
 void free_symbols_table(symbols_table *tab);
 
 symbol *next_symbol(symbols_table *tab);

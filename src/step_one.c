@@ -21,6 +21,14 @@ static void create_step_one_error(step_one *step_one, errorCode errorCode);
 static errorCode append_line(step_one *step_one);
 static errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line);
 
+
+
+/*run step one is the controller of step one, it creates the step one entity, reads line after line, process it, and handles
+        the release of all memory blocks allocated in this step, before returning to run assembler and continue to step two or
+        stops due to errors in first step.
+            Params:
+                -assembler: an assembler struct that holds the file that is processed by the step.
+(assembler holds the success key to indicate how to behave after this step ends.) */
 void run_step_one(assembler *assembler)
 {
     step_one *step_one;
@@ -39,6 +47,13 @@ void run_step_one(assembler *assembler)
     free(step_one);
 }
 
+/*step one line algo handles the logics of handling a single line, since the connection between lines is established 
+    only in step two, the fist step looks at every line as a seperate entity and process it, leaving unprocessed declarions
+    for later handle by step two.
+        Params:
+            -step one: pointer to step one struct consistent with the file that's currently handled
+        return: true if the line processed with no errors false if any errors occured while parsing
+             */
 boolean step_one_line_algo(step_one *step_one)
 {
 #define TRY_THROW_S1(FUNC) {\
@@ -141,7 +156,10 @@ void create_step_one_error(step_one *step_one, errorCode errorCode)
 {
     create_error(errorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy);
 }
-
+/*get symbol property handles the classification of symols according to its context, its a subroutin of add symbol declaration
+    Params:
+        -statement: the statement that's its symbol's property we wish to define
+    return: the statement type the symbol represents*/
 symbolProperty get_symbol_property(statement *statement)
 {
     switch (statement->statement_type)
@@ -165,11 +183,18 @@ void step_one_add_symbol_usage(step_one *step_one, address *address)
     }
 }
 
+/*append line habdles the parsing of an entire line (breakes line after the label, if exists, was extracted to operation
+    and operand)
+        Params:
+            -step one: pointer to step one struct consistent with the file that's currently handled
+        return: OK if line was appended properly, or error code of append operation*/
 errorCode append_line(step_one *step_one)
 {
     statement *statement;
     statement = step_one->curr_statement;
     if(step_one->curr_statement->operation_type != NONE_OP)
+    /*TODO maybe by making append operation subroutine of append image line, we can make append line super thin (and maybe even 
+            merge append line with append image line) */
     {
         return append_operation(step_one, statement->operation_type, statement->image_line);
     }
@@ -181,7 +206,14 @@ errorCode append_line(step_one *step_one)
     return OK;
 }
 
-
+/*append operation writes operations and operands to the tmp source code, it verifies the number of operands with 
+    the operarion describes.
+        Params:
+            -step one: pointer to step one struct consistent with the file that's currently handled
+            -operation type: enum represents the operation that's handled
+            -image line: the image line pointer of the current statement that's habndled
+        return: OK if there's a operation-operand match (number wise)
+                     or indicates weather there are too many operands or less than requied.*/
 errorCode append_operation(step_one *step_one, operationType operation_type, image_line *image_line)
 {
     word_converter w;
@@ -220,6 +252,11 @@ errorCode append_operation(step_one *step_one, operationType operation_type, ima
 
     return OK;
 }
+/*get operand word is a sub routine of append operation to handle operands convertion and classification
+    Params:
+        -operand: pointer to an address struct contains an operand
+    return: word struct cosistent with the operand.... 
+    TDOD is it fully implemented?*/
 word get_operand_word(address *operand)
 {
     word_converter w;
@@ -236,7 +273,10 @@ word get_operand_word(address *operand)
 
     return w.raw;
 }
-
+/*append image lines writes to the end of the tmp output file the parsed image lines in base "special four"
+        Params:
+            -step one: -step one: pointer to step one struct consistent with the file that's currently handled
+        return: TODO if it returns ONLY 'OK' why not making it void?*/  
 errorCode append_image_lines(step_one *step_one)
 {
     address *curr_address;
@@ -256,6 +296,13 @@ errorCode append_image_lines(step_one *step_one)
     return OK;
 }
 
+/*operation operands received an operation names and return a number between 0-2 to represent the number of
+operands the operation works on.
+    Params: 
+        -op_type: the operation that needs to be matched with the number of operands.
+    return: 0 if the operation needs no operands in order to operate(e.g. "stop" operation), 
+            1 if the operation needs a single operand to operate (e.g. "not" operation) 
+            2 if the operation needs two operands to operate (e.g. "mov" operation)  */
 char operation_operands(operationType op_type)
 {
     switch (op_type)
@@ -283,6 +330,11 @@ char operation_operands(operationType op_type)
     }
 }
 
+/*Create step one takes an assembler struct and wraps it with step one struct to handle the specific
+    requirements of this step (e.g. pointer to the current line that is parsed, lines counter)
+        Params: 
+            -assembler: the current file to parse wraped in an assembler struct
+        return: step one struct, with the assembler includes IN it. */
 step_one *create_step_one(assembler *assembler)
 {
     step_one *result;
@@ -305,6 +357,9 @@ step_one *create_step_one(assembler *assembler)
     return result;
 }
 
+/* create statement initialize a statement struct by allocating memory block for it and initializing the an empty 
+    adrresses queue
+        return: initialized statement pointer. */
 statement *create_statement()
 {
     statement *result;
@@ -350,3 +405,6 @@ void free_step_one_objs(step_one *step_one)
         }
     }
 }
+
+
+/*TODO take out the "create_" functions to an "initialization" module */

@@ -5,6 +5,13 @@
 #include "helpers/list.h"
 
 /* TODO: Move private to the and and create prototypes */
+   /*TODO suggestion: append_ent_ext: receives assembler and enum (extern and entry) and append w/ cases, will shorten run step 
+   two and we can deque seemlessly, and move it to files*/
+   /*append entries creates from the 'entries' queue an entries file, if queue isn't empty 
+        Params:
+                -assembler: an assembler struct that holds the file that is processed by the step.
+                -entries: (name,index) queue to convert to FILE 
+           */ 
 
 static void append_entries(assembler *assembler, queue *entries)
 {
@@ -28,7 +35,11 @@ static void append_entries(assembler *assembler, queue *entries)
     }
     fclose(fp);
 }
-
+ /*append externals creates from the 'externals' queue an externals file, if queue isn't empty 
+        Params:
+                -assembler: an assembler struct that holds the file that is processed by the step.
+                -externals: (name,index) queue to convert to FILE 
+           */
 static void append_externals(assembler *assembler, queue *externals)
 {
     FILE *fp;
@@ -118,7 +129,7 @@ void step_two_run(assembler *assembler)
         }
         curr_sym = next_symbol(NULL);
     }
-
+/*  */
     frecopy_temp_to_obj(assembler);
     if(!IS_EMPTY_QUEUE(entries))
     {
