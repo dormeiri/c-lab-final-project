@@ -87,8 +87,6 @@ void step_two_run(assembler *assembler)
     Queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
     Queue *externals;   /* The same as entries queue but for externals */
 
-    puts("Start step two");
-
     entries = queue_new(sizeof(symbol));
     externals = queue_new(sizeof(symbol));
 

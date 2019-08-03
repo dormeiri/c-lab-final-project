@@ -76,8 +76,12 @@ boolean step_one_line_algo(step_one *step_one)
     char *temp_str;
     word temp_value;
 
-    temp_str = (char *)malloc(MAX_STRING_LEN * sizeof(char));
+    if(!(temp_str = (char *)malloc(MAX_STRING_LEN * sizeof(char))))
+    {
+        exit(EXIT_FAILURE);
+    }
     step_one->curr_line_copy = strncpy(temp_str, step_one->curr_line, MAX_STRING_LEN);
+
 
     step_one->curr_statement = create_statement();
     TRY_THROW_S1(map_statement(step_one), NULL);

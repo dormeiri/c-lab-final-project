@@ -41,7 +41,7 @@ boolean run_assembler(const char *filename)
     ErrorCode res;
     assembler *curr_assembler = NULL;
 
-    printf("Started compiling %s\n", filename);
+    printf("Started compiling \"%s\"\n", filename);
    
     if((res = create_assembler(filename, &curr_assembler)) != OK)
     {
@@ -49,16 +49,19 @@ boolean run_assembler(const char *filename)
         return FALSE;
     }
     
+    puts("Start step one");
     run_step_one(curr_assembler);
-    printf("Finished step one\n");
+    puts("Finish step one");
     if(curr_assembler->succeed)
     {
+        puts("Start step two");
         step_two_run(curr_assembler);
+        puts("Finish step two");
     }
     
     if(curr_assembler->succeed)
     {
-        printf("%s compiled succeessfuly\n", filename);
+        printf("\"%s\" compiled succeessfuly\n", filename);
     }
     else
     {
@@ -101,4 +104,5 @@ void free_assembler(assembler *assembler)
     fclose(assembler->input_fp);
     fclose(assembler->output_fp);
     free_symbols_table(assembler->symbols_table);
+    free(assembler->symbols_table);
 }

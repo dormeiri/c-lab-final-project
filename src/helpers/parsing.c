@@ -20,7 +20,7 @@ typedef struct Translation
 } Translation;
 
 /* Comment charecter */
-#define COMMENT_CHAR '#'
+#define COMMENT_CHAR ';'
 
 /* Macro set value charcter */
 #define MACRO_SET_CHAR '='

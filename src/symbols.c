@@ -103,7 +103,6 @@ ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, sy
     {
         sptr = install(tab, create_symbol(symbol_name, prop));
     }
-
     switch (prop)
     {
         case EXTERN_SYM:
