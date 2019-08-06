@@ -1,7 +1,7 @@
 #ifndef VALIDATIONS_HEADER
 #define VALIDATIONS_HEADER
 
-#include "error.h"
+#include "Error.h"
 
 /*  Description:    Check for bad chars at the beginning of arguments string
 *   Params:

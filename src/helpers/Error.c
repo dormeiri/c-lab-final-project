@@ -1,20 +1,10 @@
-/* 
-*   Documenting:        DONE
-*   Naming:             DONE
-*   Code complexity:    DONE
-*   Unused check:       DONE
-*   Encapsulation:      DONE
-*   Includes:           DONE
-*   Order:              DONE
-*/
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdarg.h>
-#include "error.h"
-#include "../commons.h"
+#include "Error.h"
+#include "../Commons.h"
 
 /* Represents error occurence while compiling .as file */
 typedef struct

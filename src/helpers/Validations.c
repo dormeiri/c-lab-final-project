@@ -1,6 +1,6 @@
-#include "validations.h"
-#include "parsing.h"
-#include "../commons.h"
+#include "Validations.h"
+#include "Parsing.h"
+#include "../Commons.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -46,7 +46,7 @@ ErrorCode check_token_consecutive(char *token)
 
 ErrorCode is_valid_tag(const char *token)
 {
-    word temp;
+    Word temp;
     char i = 1;
 
     /* TODO: Add reserved words validations  */

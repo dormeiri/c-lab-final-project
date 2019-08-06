@@ -1,11 +1,3 @@
-/* 
-*   Documenting:        DONE
-*   Naming:             DONE
-*   Code complexity:    DONE
-*   Unused check:       DONE
-*   Encapsulation:      DONE
-*/
-
 /*  
 *   Errors handling guidelines:
 *   - Any function that may catch any error during run-time should be with ErrorCode return type

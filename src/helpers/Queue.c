@@ -1,5 +1,5 @@
 #include <string.h>
-#include "queue.h"
+#include "Queue.h"
 
 Queue *queue_new(size_t data_size)
 {

@@ -10,7 +10,7 @@
 #ifndef PARSING_HEADER
 #define PARSING_HEADER
 
-#include "../step_one.h"
+#include "../StepOne.h"
 
 /* Check whether a character is white space character */
 #define IS_WHITESPACE(CHAR) ((CHAR) == WHITE_SPACE_1 || (CHAR) == WHITE_SPACE_2)
@@ -31,7 +31,7 @@
 *       - step_one: The step one struct that contains current line
 *   Return:         If any error occured, return error type, otherwise OK
 */
-ErrorCode map_statement(step_one *step_one);
+ErrorCode map_statement(StepOne *step_one);
 
 /*  Description:    Parse the arguments of macro statement, puts in symbol and value parameters the result
 *   Params:
@@ -40,7 +40,7 @@ ErrorCode map_statement(step_one *step_one);
 *       - value:    Set here the value as declared in the macro arguments
 *   Return:         If any error occured, return error type, otherwise OK
 */
-ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value);
+ErrorCode parse_macro_statement(StepOne *step_one, char **symbol, Word *value);
 
 /*  Description:    Parse the next argument of step_one current statement struct and put it in out
 *   Params:
@@ -48,7 +48,7 @@ ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value);
 *       - out:      The result will go here
 *   Return:         If any error occured, return error type, otherwise OK
 */
-ErrorCode get_next_arg(step_one *step_one, address **out);
+ErrorCode get_next_arg(StepOne *step_one, Address **out);
 
 /*  Description:    Clean and parse the arguments string as a .string argument
 *   Params:
@@ -56,7 +56,7 @@ ErrorCode get_next_arg(step_one *step_one, address **out);
 *       - out:      The result will go here
 *   Return:         If any error occured, return error type, otherwise OK
 */
-ErrorCode get_string_arg(step_one *step_one, char **out);
+ErrorCode get_string_arg(StepOne *step_one, char **out);
 
 /*  Description:    Get the argument string as a label for .entry and .extern
 *   Params:
@@ -64,17 +64,17 @@ ErrorCode get_string_arg(step_one *step_one, char **out);
 *       - out:      The result will go here
 *   Return:         If any error occured, return error type, otherwise OK
 */
-ErrorCode get_label_arg(step_one *step_one, char **out);
+ErrorCode get_label_arg(StepOne *step_one, char **out);
 
 
-/*  Description:    Find the matching operationType of the string str
+/*  Description:    Find the matching OperationType of the string str
 *   Params:
 *       - str:      The string to match
-*   Return:         The matching operationType of this string str
+*   Return:         The matching OperationType of this string str
 */
-operationType parse_operation_type(const char *str);
+OperationType parse_operation_type(const char *str);
 
 
-boolean parse_register(const char *token, word *out);
+boolean parse_register(const char *token, Word *out);
 
 #endif

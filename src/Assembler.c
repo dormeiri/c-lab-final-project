@@ -1,15 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "symbols.h"
-#include "assembler.h"
-#include "helpers/parsing.h"
-#include "helpers/files.h"
-#include "step_one.h"
-#include "step_two.h"
+#include "Assembler.h"
+#include "StepOne.h"
+#include "StepTwo.h"
 
 static boolean run_assembler(const char *filename);
-static void free_assembler(assembler *assembler);
-static ErrorCode create_assembler(const char *name, assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
+static void free_assembler(Assembler *assembler);
+static ErrorCode create_assembler(const char *name, Assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
  /*create assembler builds an assembler entity with the followitg pointers: filename pointer, input file pointer, output file pointer
  and a boolean variable to have a single source flow control.*/
 
@@ -39,7 +36,7 @@ boolean run_assembler(const char *filename)
     /* TODO: Remove old .ext, .entm .ob files, create function in files.h for that */
 
     ErrorCode res;
-    assembler *curr_assembler = NULL;
+    Assembler *curr_assembler = NULL;
 
     printf("Started compiling \"%s\"\n", filename);
    
@@ -52,11 +49,18 @@ boolean run_assembler(const char *filename)
     puts("Start step one");
     run_step_one(curr_assembler);
     puts("Finish step one");
+
+    fclose(curr_assembler->input_fp);
+    curr_assembler->input_fp = NULL;
+    
     if(curr_assembler->succeed)
     {
         puts("Start step two");
         step_two_run(curr_assembler);
         puts("Finish step two");
+
+        fclose(curr_assembler->output_fp);
+        curr_assembler->output_fp = NULL;
     }
     
     if(curr_assembler->succeed)
@@ -76,15 +80,15 @@ boolean run_assembler(const char *filename)
 final output file.
         Params:
             -name: the name of the file as received in argv[] */
-ErrorCode create_assembler(const char *name, assembler **out)
+ErrorCode create_assembler(const char *name, Assembler **out)
 {
-    if(!(*out = (assembler *)malloc(sizeof(assembler))))
+    if(!(*out = (Assembler *)malloc(sizeof(Assembler))))
     {
         exit(EXIT_FAILURE);
     }
     (*out)->succeed = TRUE;
     (*out)->name = name;
-    if(!((*out)->symbols_table = (symbols_table *)malloc(sizeof(symbols_table))))
+    if(!((*out)->symbols_table = (SymbolTable *)malloc(sizeof(SymbolTable))))
     {
         exit(EXIT_FAILURE);
     }
@@ -99,10 +103,8 @@ ErrorCode create_assembler(const char *name, assembler **out)
     Params:
         -assembler: the entity that is passed between the various steps.
          */
-void free_assembler(assembler *assembler)
+void free_assembler(Assembler *assembler)
 {
-    fclose(assembler->input_fp);
-    fclose(assembler->output_fp);
     free_symbols_table(assembler->symbols_table);
     free(assembler->symbols_table);
 }

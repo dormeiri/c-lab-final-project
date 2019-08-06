@@ -8,9 +8,9 @@ Guidelines:
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "../symbols.h"
-#include "validations.h"
-#include "parsing.h"
+#include "../entities/Symbol.h"
+#include "Validations.h"
+#include "Parsing.h"
 
 typedef struct Translation
 {
@@ -64,11 +64,11 @@ typedef struct Translation
     DEST = STR;\
     for(;(IS_EMPTY_STR(STR) || IS_WHITESPACE(*STR)) == FALSE; STR++)
 
-static ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref);
-static ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref);
-static ErrorCode tok_to_num(step_one *step_one, char *token, word *out);
-static ErrorCode tok_to_array(step_one *step_one, char *token, address *out);
-static ErrorCode strtok_wrapper(step_one *step_one, char **tokenp);
+static ErrorCode map_statement_key(char *statement_key_str, Statement *statement_ref);
+static ErrorCode map_operation_type(char *statement_key_str, Statement *statement_ref);
+static ErrorCode tok_to_num(StepOne *step_one, char *token, Word *out);
+static ErrorCode tok_to_array(StepOne *step_one, char *token, Address *out);
+static ErrorCode strtok_wrapper(StepOne *step_one, char **tokenp);
 static void clean_token(char **token_ref);
 
 /*****************/
@@ -78,10 +78,12 @@ static void clean_token(char **token_ref);
 /* Check the instruction type of the current line of step_one,
 Also check if there is any tag declared
 put the result in step one current statement */
-ErrorCode map_statement(step_one *step_one)
+ErrorCode map_statement(StepOne *step_one)
 {   
+    char *tag;
+
     char *statement_key;    /* Store the instruction string (example: .data, mov,...) */
-    statement *statement = step_one->curr_statement;
+    Statement *statement = step_one->curr_statement;
     char *statement_line = step_one->curr_line;
 
     IGNORE_WHITE_SPACES(statement_line);
@@ -95,7 +97,7 @@ ErrorCode map_statement(step_one *step_one)
         statement->statement_type = EMPTY_KEY;
         return OK;
     }
-    READ_FIRST_WORD(statement_line, statement->tag);
+    READ_FIRST_WORD(statement_line, tag);
     if(*statement_line == TAG_END) /* Has tag */
     {
         SPLIT_STR(statement_line);
@@ -106,8 +108,8 @@ ErrorCode map_statement(step_one *step_one)
     }
     else
     {
-        statement_key = statement->tag;
-        statement->tag = NULL;
+        statement_key = tag;
+        tag = NULL;
     }
     
     /* Split instruction string and arguments string */
@@ -118,15 +120,29 @@ ErrorCode map_statement(step_one *step_one)
         IGNORE_WHITE_SPACES(statement_line);
     }
 
-    statement->args = IS_EMPTY_STR(statement_line) ? NULL : statement_line;
+    if(!(statement->args = malloc(sizeof(char) * strlen(statement_line))))
+    {
+        exit(EXIT_FAILURE);
+    }
+    strcpy(statement->args, statement_line);
+    TRY_THROW(preaction_validations(statement->args));
+
+
+    if(tag != NULL)
+    {
+        if(!(statement->tag = malloc(sizeof(char) * strlen(tag))))
+        {
+            exit(EXIT_FAILURE);
+        }
+        strcpy(statement->tag, tag);
+    }
 
     TRY_THROW(map_statement_key(statement_key, statement));
-    TRY_THROW(preaction_validations(statement->args));
     return OK;
 }
 
 /* Parse macro statement by splitting the results on MACRO_SET_CHAT */
-ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
+ErrorCode parse_macro_statement(StepOne *step_one, char **symbol, Word *value)
 {
     char *args_str = step_one->curr_statement->args;
     
@@ -149,19 +165,11 @@ ErrorCode parse_macro_statement(step_one *step_one, char **symbol, word *value)
 }
 
 /* Get the next argument of step one current statement, put the result in out */
-ErrorCode get_next_arg(step_one *step_one, address **out)
+ErrorCode get_next_arg(StepOne *step_one, Address **out)
 {
     char *token;
 
-
-    if(!(*out = (address *)malloc(sizeof(address))))
-    {
-        exit(EXIT_FAILURE);
-    }
-
-    (*out)->symbol_name = NULL;
-    (*out)->value = 0;
-
+    *out = address_new();
     TRY_THROW(strtok_wrapper(step_one, &token));
     step_one->curr_statement->args = NULL;
     (*out)->symbol_name = NULL;
@@ -193,7 +201,7 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
     }
     else if(is_valid_tag(token)) /* Direct type address */
     {
-        symbol *sym;
+        Symbol *sym;
         if((sym = find_symbol(step_one->assembler->symbols_table, token)) && sym->property.prop == MACRO_SYM)
         {
             (*out)->value = sym->value;
@@ -214,7 +222,7 @@ ErrorCode get_next_arg(step_one *step_one, address **out)
 }
 
 /* Clean the arguments string and validate the use of quotes */
-ErrorCode get_string_arg(step_one *step_one, char **str_ref)
+ErrorCode get_string_arg(StepOne *step_one, char **str_ref)
 {
     char *args_str = step_one->curr_statement->args;
     clean_token(&args_str);
@@ -238,15 +246,15 @@ ErrorCode get_string_arg(step_one *step_one, char **str_ref)
 }
 
 /* Clean the token end check if it is valid tag */
-ErrorCode get_label_arg(step_one *step_one, char **label)
+ErrorCode get_label_arg(StepOne *step_one, char **label)
 {
     *label = step_one->curr_statement->args;
     clean_token(label);
     return is_valid_tag(*label);
 }
 
-/* Find the matching operationType of a string */
-operationType parse_operation_type(const char *str)
+/* Find the matching OperationType of a string */
+OperationType parse_operation_type(const char *str)
 {
     static Translation translations[] = 
     {
@@ -276,7 +284,7 @@ operationType parse_operation_type(const char *str)
 
 /* Check if the string starts with 'r' if yes parse number comes after, but of the number starts with 0 then it must be 0,
 for example r01 is not allowed */
-boolean parse_register(const char *token, word *out)
+boolean parse_register(const char *token, Word *out)
 {
     char *end_str;
     if((token[0] != REGISTER_CHAR) || ((token[1] == '0') && (token[2])))
@@ -294,7 +302,7 @@ boolean parse_register(const char *token, word *out)
 /********************/
 
 /* Match statement_key_str to instruction type and put the result in statement_ref */
-ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
+ErrorCode map_statement_key(char *statement_key_str, Statement *statement_ref)
 {
     static Translation translations[] = 
     {
@@ -327,9 +335,9 @@ ErrorCode map_statement_key(char *statement_key_str, statement *statement_ref)
 }
 
 /* Match the statement key str to operation string and put in the statement struct the result */
-ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
+ErrorCode map_operation_type(char *statement_key_str, Statement *statement_ref)
 {
-    operationType op;
+    OperationType op;
 
     op = parse_operation_type(statement_key_str);
     if(op == NONE_OP)
@@ -343,7 +351,7 @@ ErrorCode map_operation_type(char *statement_key_str, statement *statement_ref)
 
 /* Parse the next token with strtok, clean this token from leading and trailing white spaces,
 and check if the token is valid pass args_str as NULL to continue reading tokens from the last string */
-ErrorCode strtok_wrapper(step_one *step_one, char **token_ref)
+ErrorCode strtok_wrapper(StepOne *step_one, char **token_ref)
 {
     str_len_t i;
     char *args_str = step_one->curr_statement->args;
@@ -363,10 +371,10 @@ ErrorCode strtok_wrapper(step_one *step_one, char **token_ref)
 }
 
 /* Parse token to numer,  */
-ErrorCode tok_to_num(step_one *step_one, char *token, word *out)
+ErrorCode tok_to_num(StepOne *step_one, char *token, Word *out)
 {
     char *end_str = NULL;  /* The pointer to the string after the parsed number */
-    symbol *sym;
+    Symbol *sym;
 
     if(isalpha(token[0]))
     {
@@ -396,7 +404,7 @@ ErrorCode tok_to_num(step_one *step_one, char *token, word *out)
 }
 
 /* Parse token to array and put the result in address_ref */
-ErrorCode tok_to_array(step_one *step_one, char *token, address *address_ref)
+ErrorCode tok_to_array(StepOne *step_one, char *token, Address *address_ref)
 {
     char *index_token; /* The string which represent the index */
 

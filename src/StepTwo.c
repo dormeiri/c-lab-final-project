@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "step_two.h"
-#include "helpers/files.h"
-#include "symbols.h"
-#include "helpers/list.h"
+#include "StepTwo.h"
+#include "helpers/Files.h"
+#include "entities/Symbol.h"
+#include "helpers/List.h"
 
 /* TODO: Move private to the and and create prototypes */
    /*TODO suggestion: append_ent_ext: receives assembler and enum (extern and entry) and append w/ cases, will shorten run step 
@@ -13,15 +13,15 @@
                 -entries: (name,index) queue to convert to FILE 
            */ 
 
-static void append_entries(assembler *assembler, Queue *entries)
+static void append_entries(Assembler *assembler, Queue *entries)
 {
     FILE *fp;
-    symbol *curr_sym;
+    Symbol *curr_sym;
 
     if(assembler->succeed)
     {
         files_get_output(assembler, ENTRY_FILE, &fp);
-        while((curr_sym = (symbol *)dequeue(entries)))
+        while((curr_sym = (Symbol *)dequeue(entries)))
         {
             fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, curr_sym->declaration_index);
             symbol_free(curr_sym);
@@ -35,18 +35,18 @@ static void append_entries(assembler *assembler, Queue *entries)
                 -assembler: an assembler struct that holds the file that is processed by the step.
                 -externals: (name,index) queue to convert to FILE 
            */
-static void append_externals(assembler *assembler, Queue *externals)
+static void append_externals(Assembler *assembler, Queue *externals)
 {
     FILE *fp;
-    symbol *curr_sym;
-    symbol_usage *sym_usage;
+    Symbol *curr_sym;
+    SymbolUsage *sym_usage;
 
     if(assembler->succeed)
     {
         files_get_output(assembler, EXTERN_FILE, &fp);
-        while((curr_sym = (symbol *)dequeue(externals)))
+        while((curr_sym = (Symbol *)dequeue(externals)))
         {
-            while((sym_usage = (symbol_usage *)list_get_next(curr_sym->usages)))
+            while((sym_usage = (SymbolUsage *)list_get_next(curr_sym->usages)))
             {
                 fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, sym_usage->address_index);
             }
@@ -56,39 +56,39 @@ static void append_externals(assembler *assembler, Queue *externals)
     fclose(fp);
 }
 
-static void update_addresses(assembler *assembler, symbol *sym)
+static void update_addresses(Assembler *assembler, Symbol *sym)
 {
-    symbol_usage *sym_usage;
+    SymbolUsage *sym_usage;
 
     if(assembler->succeed)
     {
-        while((sym_usage = (symbol_usage *)list_get_next(sym->usages)))
+        while((sym_usage = (SymbolUsage *)list_get_next(sym->usages)))
         {
             files_update_symbol_usage(assembler, sym, sym_usage);
         }
     }
 }
 
-static void error_new_step_two(assembler *assembler, symbol *sym)
+static void error_new_step_two(Assembler *assembler, Symbol *sym)
 {
-    symbol_usage *sym_usage;
+    SymbolUsage *sym_usage;
 
     assembler->succeed = FALSE;
-    while((sym_usage = (symbol_usage *)list_get_next(sym->usages)))
+    while((sym_usage = (SymbolUsage *)list_get_next(sym->usages)))
     {
         /* Not declared symbol is the only error can occured during step two */
         error_print(NOT_DECLARED, sym_usage->line_num, assembler->name, sym_usage->line_str, sym->symbol_name);
     }
 }
 
-void step_two_run(assembler *assembler)
+void step_two_run(Assembler *assembler)
 {
-    symbol *curr_sym;
+    Symbol *curr_sym;
     Queue *entries;     /* Queue that stores entries and at the end append them to entries file in batch */
     Queue *externals;   /* The same as entries queue but for externals */
 
-    entries = queue_new(sizeof(symbol));
-    externals = queue_new(sizeof(symbol));
+    entries = queue_new(sizeof(Symbol));
+    externals = queue_new(sizeof(Symbol));
 
     curr_sym = next_symbol(assembler->symbols_table);
     while((curr_sym))

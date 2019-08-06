@@ -1,5 +1,5 @@
-#include "files.h"
-#include "../commons.h"
+#include "Files.h"
+#include "../Commons.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -10,19 +10,19 @@ static ErrorCode get_output_file(char *filename, FILE **fp_ref);
 static ErrorCode fgets_wrapper(FILE *fp, char **line_ref);
 static ErrorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
 static ErrorCode get_file(char *filename, char *mode, FILE **fp_ref);
-static char *convert_to_base4(word value);
+static char *convert_to_base4(Word value);
 
 /****************/
 /*    Public    */
 /****************/
 
-void files_update_symbol_usage(assembler *assembler, symbol *symbol, symbol_usage *sym_usage)
+void files_update_symbol_usage(Assembler *assembler, Symbol *symbol, SymbolUsage *sym_usage)
 {
     fseek(assembler->output_fp, sym_usage->file_pos, SEEK_SET);
     files_write_address(assembler, sym_usage->address_index, symbol->value);
 }
 
-void files_frecopy(assembler *assembler)
+void files_frecopy(Assembler *assembler)
 {
     FILE *fp = NULL;
 
@@ -35,12 +35,15 @@ void files_frecopy(assembler *assembler)
 }
 
 
-ErrorCode files_get_input(assembler *assembler, FILE **out)
+ErrorCode files_get_input(Assembler *assembler, FILE **out)
 {
-    return get_input_file(get_filename(assembler->name, INPUT_EXT), out);
+    char *filename = get_filename(assembler->name, INPUT_EXT);
+    TRY_THROW(get_input_file(filename, out));
+    free(filename);
+    return OK;
 }
 
-ErrorCode files_get_output(assembler *assembler, OutputFileType type, FILE **out)
+ErrorCode files_get_output(Assembler *assembler, OutputFileType type, FILE **out)
 {
     char *filename;
     switch (type)
@@ -70,15 +73,17 @@ ErrorCode files_get_output(assembler *assembler, OutputFileType type, FILE **out
             break;
     }
 
-    return get_output_file(filename, out);
+    TRY_THROW(get_output_file(filename, out));
+    free(filename);
+    return OK;
 }
-ErrorCode files_read_line(assembler *assembler, char **out)
+ErrorCode files_read_line(Assembler *assembler, char **out)
 {
     return fgets_wrapper(assembler->input_fp, out);
 }
 
 
-void files_write_address(assembler *as, int address_index, word value)
+void files_write_address(Assembler *as, int address_index, Word value)
 {
     fprintf(as->output_fp, "%04d %s\n", address_index, convert_to_base4(value));
 }
@@ -139,7 +144,7 @@ ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
     {
         return BUF_LEN_EXCEEDED;
     }
-    *line_ref = buffer;
+    strcpy(*line_ref, buffer);
     return OK;
 }
 
@@ -182,16 +187,16 @@ char *get_filename(const char *name, const char *extention)
     return filename;
 }
 
-char *convert_to_base4(word value)
+char *convert_to_base4(Word value)
 {
     char *result;
-    word mask;
+    Word mask;
     int i;
 
     /* TODO: Improve, could be done without reversing */
 
-    result = (char *)malloc(sizeof(word) * sizeof(char));
-    for(mask = 3, i = 0; (mask << ((sizeof(word) * 8) - WORD_SIZE)) != 0; mask <<= 2, i++)
+    result = (char *)malloc(sizeof(Word) * sizeof(char));
+    for(mask = 3, i = 0; (mask << ((sizeof(Word) * 8) - WORD_SIZE)) != 0; mask <<= 2, i++)
     {
         switch ((value & mask) >> (i * 2))
         {

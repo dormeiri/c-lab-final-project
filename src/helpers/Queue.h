@@ -2,7 +2,7 @@
 #define QUEUE_HEADER
 
 #include <stdlib.h>
-#include "../commons.h"
+#include "../Commons.h"
 
 /* Generic queue node */
 typedef struct QueueNode

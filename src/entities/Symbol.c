@@ -1,5 +1,5 @@
 #include <string.h>
-#include "symbols.h"
+#include "Symbol.h"
 
 #define NEXT_NODE(TAB, I, DEST) {\
     size_t J = (I) + 1;\
@@ -16,15 +16,15 @@
 }
 
 static unsigned hash(const char *symbol_name);
-static symbol_list *install(symbols_table *tab, symbol *sym);
-static symbol_list *lookup(symbols_table *tab, const char *symbol_name);
-static symbol *create_symbol(const char *name, symbolProperty prop);
+static SymbolList *install(SymbolTable *tab, Symbol *sym);
+static SymbolList *lookup(SymbolTable *tab, const char *symbol_name);
+static Symbol *create_symbol(const char *name, SymbolProperty prop);
 void symbol_usages_list_free(List *l);
 
-void free_symbols_table(symbols_table *tab)
+void free_symbols_table(SymbolTable *tab)
 {
     int i = 0;
-    symbol_list *temp;
+    SymbolList *temp;
 
     for(; i < SYMBOL_HASHSIZE; i++)
     {
@@ -42,10 +42,10 @@ void free_symbols_table(symbols_table *tab)
     }
 }
 
-symbol *next_symbol(symbols_table *tab)
+Symbol *next_symbol(SymbolTable *tab)
 {
-    static symbols_table *sym_tab;
-    static symbol_list *curr_node = NULL;
+    static SymbolTable *sym_tab;
+    static SymbolList *curr_node = NULL;
     static size_t i;
 
     if(tab)
@@ -64,10 +64,10 @@ symbol *next_symbol(symbols_table *tab)
     return curr_node ? curr_node->value : NULL;
 }
 
-ErrorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
+ErrorCode add_entry_declaration(SymbolTable *tab, const char *symbol_name)
 {
     /* TODO: TBD does entry can be declared with external? */
-    symbol_list *sptr;
+    SymbolList *sptr;
     if((sptr = lookup(tab, symbol_name)))
     {
         if(sptr->value->property.ent)
@@ -86,10 +86,10 @@ ErrorCode add_entry_declaration(symbols_table *tab, const char *symbol_name)
     return OK;
 }
 
-ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, symbolProperty prop, word value, int declaration_index)
+ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, SymbolProperty prop, Word value, int declaration_index)
 {
     word_converter w;
-    symbol_list *sptr;
+    SymbolList *sptr;
 
     if((sptr = lookup(tab, symbol_name)))
     {
@@ -126,11 +126,11 @@ ErrorCode add_symbol_declaration(symbols_table *tab, const char *symbol_name, sy
     return OK;
 }
 
-ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos, long line_num, const char *line_str, int address_index)
+ErrorCode add_symbol_usage(SymbolTable *tab, const char *symbol_name, long pos, long line_num, const char *line_str, int address_index)
 {
-    symbol_list *sptr;
-    symbol_usage *result;
-    if(!(result = (symbol_usage *)malloc(sizeof(symbol_usage))))
+    SymbolList *sptr;
+    SymbolUsage *result;
+    if(!(result = (SymbolUsage *)malloc(sizeof(SymbolUsage))))
     {
         exit(EXIT_FAILURE);
     }
@@ -153,19 +153,19 @@ ErrorCode add_symbol_usage(symbols_table *tab, const char *symbol_name, long pos
     return OK;
 }
 
-symbol *find_symbol(symbols_table *tab, const char *symbol_name)
+Symbol *find_symbol(SymbolTable *tab, const char *symbol_name)
 {
-    symbol_list *sptr;
+    SymbolList *sptr;
     
     sptr = lookup(tab, symbol_name);
     return sptr ? sptr->value : NULL;
 }
 
-symbol *create_symbol(const char *name, symbolProperty prop)
+Symbol *create_symbol(const char *name, SymbolProperty prop)
 {
-    symbol *result;
+    Symbol *result;
 
-    if(!(result = (symbol *)malloc(sizeof(symbol))))
+    if(!(result = (Symbol *)malloc(sizeof(Symbol))))
     {
         exit(EXIT_FAILURE);
     }
@@ -184,15 +184,15 @@ symbol *create_symbol(const char *name, symbolProperty prop)
     return result;
 }
 
-symbol_list *install(symbols_table *tab, symbol *sym)
+SymbolList *install(SymbolTable *tab, Symbol *sym)
 {
-    symbol_list *sptr;
+    SymbolList *sptr;
     unsigned hashval;
     
     
     if(!(sptr = lookup(tab, sym->symbol_name)))
     {
-        if(!(sptr = (symbol_list *) malloc(sizeof(symbol_list))))
+        if(!(sptr = (SymbolList *) malloc(sizeof(SymbolList))))
         {
             exit(EXIT_FAILURE);
         }
@@ -210,9 +210,9 @@ symbol_list *install(symbols_table *tab, symbol *sym)
     return sptr;
 }
 
-symbol_list *lookup(symbols_table *tab, const char *symbol_name)
+SymbolList *lookup(SymbolTable *tab, const char *symbol_name)
 {
-    symbol_list *sptr;
+    SymbolList *sptr;
 
     for(sptr = (*tab)[hash(symbol_name)]; sptr; sptr = sptr->next)
     {
@@ -237,7 +237,7 @@ unsigned hash(const char *symbol_name)
 
 void symbol_queue_free(Queue *q)
 {
-    symbol *temp;
+    Symbol *temp;
     while((temp = dequeue(q)))
     {        
         symbol_free(temp);   
@@ -247,7 +247,7 @@ void symbol_queue_free(Queue *q)
 
 void symbol_list_free(List *l)
 {
-    symbol *temp;
+    Symbol *temp;
     while((temp = list_get_next(l)))
     {
         symbol_free(temp);   
@@ -255,7 +255,7 @@ void symbol_list_free(List *l)
     list_free(l);
 }
 
-void symbol_free(symbol *s)
+void symbol_free(Symbol *s)
 {
     if((s->symbol_name))
     {        
@@ -269,7 +269,7 @@ void symbol_free(symbol *s)
 
 void symbol_usages_list_free(List *l)
 {
-    symbol_usage *temp;
+    SymbolUsage *temp;
     while((temp = list_get_next(l)))
     {
         if(temp->line_str)

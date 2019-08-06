@@ -1,13 +1,4 @@
-/* 
-*   Documenting:        DONE
-*   Naming:             DONE
-*   Code complexity:    DONE
-*   Unused check:       DONE
-*   Encapsulation:      DONE
-*   Order:              DONE
-*/
-
-#include "list.h"
+#include "List.h"
 
 /* Allocate new memory for List and initialize its head and tail */
 List *list_new(size_t size)

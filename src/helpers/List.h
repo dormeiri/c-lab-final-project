@@ -1,12 +1,3 @@
-/* 
-*   Documenting:        DONE
-*   Naming:             DONE
-*   Code complexity:    DONE
-*   Unused check:       DONE
-*   Encapsulation:      DONE
-*   Order:              DONE
-*/
-
 #ifndef LIST_HEADER
 #define LIST_HEADER
 
