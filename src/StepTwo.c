@@ -23,7 +23,7 @@ static void append_entries(Assembler *assembler, Queue *entries)
         files_get_output(assembler, ENTRY_FILE, &fp);
         while((curr_sym = (Symbol *)dequeue(entries)))
         {
-            fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, curr_sym->declaration_index);
+            fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, word_get_value(curr_sym->value));
             symbol_free(curr_sym);
         }
     }
@@ -93,32 +93,27 @@ void step_two_run(Assembler *assembler)
     curr_sym = next_symbol(assembler->symbols_table);
     while((curr_sym))
     {
+        switch (curr_sym->property.prop)
+        {
+            case DATA_SYM:
+                curr_sym->value = word_add_to_value(curr_sym->value, assembler->ic);
+            case CODE_SYM:
+                curr_sym->value = word_add_to_value(curr_sym->value, DATA_SIZE);
+                update_addresses(assembler, curr_sym);
+                break;
+            case EXTERN_SYM:
+                enqueue(externals, curr_sym);
+                update_addresses(assembler, curr_sym);
+                break;
+            default: break;
+        }
         if(curr_sym->property.prop == UNKNOWN_SYM)
         {
             error_new_step_two(assembler, curr_sym);
         }
-        /* TODO: Create warning on declared but not used */
-        else
+        else if(curr_sym->property.ent)
         {
-            if(curr_sym->property.ent)
-            {
-                enqueue(entries, curr_sym);
-            }
-            switch(curr_sym->property.prop)
-            {
-                case MACRO_SYM:
-                    break;
-                case EXTERN_SYM:
-                    enqueue(externals, curr_sym);
-                    update_addresses(assembler, curr_sym);
-                    break;
-                case CODE_SYM:
-                case DATA_SYM:
-                    update_addresses(assembler, curr_sym);
-                    break;
-
-                default: break; /* Should not get here */
-            }
+            enqueue(entries, curr_sym);
         }
         curr_sym = next_symbol(NULL);
     }

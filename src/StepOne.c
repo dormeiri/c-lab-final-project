@@ -4,8 +4,6 @@
 #include "helpers/Files.h"
 #include "helpers/Parsing.h"
 
-#define DATA_SIZE 100
-
 #define TRY_THROW_S1(FUNC, INFO) {\
     ErrorCode RES;\
     if((RES = (FUNC)) != OK)\
@@ -17,7 +15,7 @@
 
 static StepOne *step_one_new(Assembler *assembler);
 static void create_step_one_error(StepOne *step_one, ErrorCode ErrorCode, const char *info);
-static boolean step_one_line_algo(StepOne *step_one);
+static Boolean step_one_line_algo(StepOne *step_one);
 static void step_one_free_runtime_objs(StepOne *step_one);
 static void step_one_free(StepOne *step_one);
 
@@ -26,7 +24,7 @@ static ErrorCode enqueue_address(StepOne *step_one);
 
 static ErrorCode append_line(StepOne *step_one);
 static ErrorCode append_image_lines(StepOne *step_one);
-static ErrorCode append_operation(StepOne *step_one, OperationType operation_type, ImageLine *image_line);
+static ErrorCode append_operation_line(StepOne *s1, OperationType op_type, ImageLine *il);
 static void append_data_image(StepOne *step_one);
 
 /*run step one is the controller of step one, it creates the step one entity, reads line after line, process it, and handles
@@ -52,6 +50,7 @@ void run_step_one(Assembler *assembler)
     append_data_image(step_one);
     step_one_free(step_one);
     free(step_one);
+    step_one = NULL;
 }
 
 /*Create step one takes an assembler struct and wraps it with step one struct to handle the specific
@@ -81,7 +80,6 @@ StepOne *step_one_new(Assembler *assembler)
 
     result->assembler = assembler;
     result->line_counter = 1;
-    result->address_index = DATA_SIZE;
     result->data_image = queue_new(sizeof(Address));
 
     return result;
@@ -99,13 +97,12 @@ void create_step_one_error(StepOne *step_one, ErrorCode ErrorCode, const char *i
             -step one: pointer to step one struct consistent with the file that's currently handled
         return: true if the line processed with no errors false if any errors occured while parsing
              */
-boolean step_one_line_algo(StepOne *step_one)
+Boolean step_one_line_algo(StepOne *step_one)
 {
     char *temp_str;
     ErrorCode res;
     Word temp_value;
 
-    
     strcpy(step_one->curr_line_copy, step_one->curr_line);
 
     step_one->curr_statement = statement_new();
@@ -113,10 +110,17 @@ boolean step_one_line_algo(StepOne *step_one)
 
     if(step_one->curr_statement->tag)
     {
-        temp_str = step_one->curr_statement->tag;
-        temp_value = step_one->address_index;
-        /* TODO: Make it shorter */
-        TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, statement_get_symbol_property(step_one->curr_statement), temp_value, step_one->address_index), NULL);
+        if(step_one->curr_statement->statement_type == EXTERN_KEY || step_one->curr_statement->statement_type == ENTRY_KEY)
+        {
+            create_step_one_error(step_one, ENT_EXT_TAG, NULL);
+        }
+        else
+        {
+            SymbolProperty prop = statement_get_symbol_property(step_one->curr_statement);
+            temp_str = step_one->curr_statement->tag;
+            temp_value = (step_one->curr_statement->statement_type == OPERATION_KEY) ? step_one->assembler->ic : step_one->assembler->dc;
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, prop, temp_value), NULL);
+        }
     }
 
     switch (step_one->curr_statement->statement_type)
@@ -124,12 +128,12 @@ boolean step_one_line_algo(StepOne *step_one)
         case MACRO_KEY:
             TRY_THROW_S1(step_one->curr_statement->tag ? INVALID_COMB_LABEL_MACRO : OK, NULL);
             TRY_THROW_S1(parse_macro_statement(step_one, &temp_str, &temp_value), NULL);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value, step_one->address_index), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, MACRO_SYM, temp_value), NULL);
             return TRUE;
 
         case EXTERN_KEY:
             get_label_arg(step_one, &temp_str);
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0, step_one->address_index), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0), NULL);
             break;
 
         case ENTRY_KEY:
@@ -171,7 +175,6 @@ void step_one_free_runtime_objs(StepOne *step_one)
 
 void step_one_free(StepOne *step_one)
 {
-            
     if(step_one->curr_line)
     {
         free(step_one->curr_line);
@@ -179,11 +182,12 @@ void step_one_free(StepOne *step_one)
     }
     if(step_one->curr_line_copy)
     {
-        free(step_one->curr_line);
-        step_one->curr_line = NULL;
+        free(step_one->curr_line_copy);
+        step_one->curr_line_copy = NULL;
     }
     queue_free(step_one->data_image);
     free(step_one->data_image);
+    step_one->data_image = NULL;
 }
 
 
@@ -195,14 +199,11 @@ ErrorCode enqueue_string_address(StepOne *step_one, const char *str)
 
     do
     {
-        /* TODO: New address */
-        if(!(temp_address = (Address *)malloc(sizeof(temp_address))))
-        {
-            exit(EXIT_FAILURE);
-        }
+        temp_address = address_new();
         temp_address->symbol_name = NULL;
         temp_address->value = *str;
         temp_address->type = INSTANT;
+        temp_address->index = step_one->assembler->dc++;
         enqueue(step_one->data_image, temp_address);
     } while ((*str++));
     return OK;
@@ -217,18 +218,18 @@ ErrorCode enqueue_address(StepOne *step_one)
     {
         if(step_one->curr_statement->statement_type == DATA_KEY)
         {
-            TRY_THROW(step_one->data_image->counter == DATA_SIZE ? DATA_OVERFLOW : OK);
+            TRY_THROW(step_one->assembler->dc == DATA_SIZE ? DATA_OVERFLOW : OK);
+            curr_address->index = step_one->assembler->dc++;
             enqueue(step_one->data_image, curr_address);
         }
         else
         {
+            curr_address->index = step_one->assembler->ic++;
             enqueue(step_one->curr_statement->image_line->addresses, curr_address);
         }
     }
     return res;
 }
-
-
 
 void step_one_add_symbol_usage(StepOne *step_one, Address *Address)
 {
@@ -237,8 +238,8 @@ void step_one_add_symbol_usage(StepOne *step_one, Address *Address)
         SymbolTable *tab = step_one->assembler->symbols_table;
         long pos = ftell(step_one->assembler->output_fp);
         long linen = step_one->line_counter;
-        const char *lines = step_one->curr_line_copy;
-        long adrs_i = step_one->address_index;
+        const char *lines = step_one->curr_line_copy; /* TODO: Copy */
+        long adrs_i = Address->index + DATA_SIZE; /* This is used by extern symbol in step two */
         add_symbol_usage(tab, Address->symbol_name, pos, linen, lines, adrs_i);
     }
 }
@@ -255,13 +256,29 @@ ErrorCode append_line(StepOne *step_one)
 
     if(step_one->curr_statement->operation_type != NONE_OP)
     {
-        return append_operation(step_one, statement->operation_type, statement->image_line);
+        return append_operation_line(step_one, statement->operation_type, statement->image_line);
     }
     else
     {
         append_image_lines(step_one);
     }
     
+    return OK;
+}
+
+ErrorCode append_operation_line(StepOne *s1, OperationType op_type, ImageLine *il)
+{
+    Word op_word;
+    
+    /* number of addresses may change while mapping image line addresses */
+    s1->assembler->ic -= s1->curr_statement->image_line->addresses->counter;
+
+    TRY_THROW(image_line_get_operation_word(op_type, il, &op_word));
+    files_write_address(s1->assembler, DATA_SIZE + s1->assembler->ic, op_word);
+
+    s1->assembler->ic += s1->curr_statement->image_line->addresses->counter + 1;
+    append_image_lines(s1);
+
     return OK;
 }
 
@@ -280,117 +297,21 @@ ErrorCode append_image_lines(StepOne *step_one)
         }
         if(curr_address->type == ARRAY)
         {
-            files_write_address(step_one->assembler, step_one->address_index++, 0);
+            files_write_address(step_one->assembler, DATA_SIZE + curr_address->index, 0);
+            curr_address->index++;
+            step_one->assembler->ic++;
         }
 
-        files_write_address(step_one->assembler, step_one->address_index++, curr_address->value);
+        files_write_address(step_one->assembler, DATA_SIZE + curr_address->index, curr_address->value);
     }
-    return OK;
-}
-
-
-/*append operation writes operations and operands to the tmp source code, it verifies the number of operands with 
-    the operarion describes.
-        Params:
-            -step one: pointer to step one struct consistent with the file that's currently handled
-            -operation type: enum represents the operation that's handled
-            -image line: the image line pointer of the current statement that's habndled
-        return: OK if there's a operation-operand match (number wise)
-                     or indicates weather there are too many operands or less than requied.*/
-ErrorCode append_operation(StepOne *step_one, OperationType operation_type, ImageLine *image_line)
-{
-    word_converter operation_word;
-    Queue *raw_queue;
-    Queue *verified_queue;
-    char num_of_operands;
-    Address *curr_address;
-    Address *last_address;
-
-    raw_queue = image_line->addresses;
-    verified_queue = queue_new(sizeof(Address));
-
-    operation_word.raw = 0;
-    operation_word.operation_word.op_code = operation_type;
-
-    num_of_operands = operation_operands(operation_type);
-
-    switch (num_of_operands)
-    {
-        case 2:
-            TRY_THROW((curr_address = (Address *)dequeue(raw_queue)) ? OK : MISSING_PARAM);
-            TRY_THROW((operation_type == LEA_OP) && ((curr_address->type) != DIRECT)
-                ? INVALID_ARGUMENT
-                : OK);
-            operation_word.operation_word.address_src = curr_address->type;
-            curr_address->value = get_operand_word(curr_address);
-            enqueue(verified_queue, last_address = curr_address);
-            /* There is no break, it'll continue to case 1 */
-        case 1:
-            TRY_THROW((curr_address = (Address *)dequeue(raw_queue)) ? OK : MISSING_PARAM);
-            operation_word.operation_word.address_dest = curr_address->type;
-            curr_address->value = get_operand_word(curr_address);
-            if(curr_address->type == REGISTER && last_address->type == REGISTER)
-            {
-                /* If two register found both in source and destination arguments, they'll share one word */
-                word_converter register_converter;
-                register_converter.raw = 0;
-                register_converter.register_word.dest = curr_address->value;
-                register_converter.register_word.source = last_address->value;
-                last_address->value = register_converter.raw;
-                free(curr_address); /* TODO: address_free */
-            }
-            else
-            {
-                /* If not both of the arguments are register, enqueue to the created queue */
-                enqueue(verified_queue, curr_address);
-            }
-            
-            break;
-    }
-    if(!IS_EMPTY_QUEUE(raw_queue)) 
-    {
-        return TOO_MANY_OPERANDS;
-    }
-
-    queue_free(raw_queue);
-    free(raw_queue);
-    image_line->addresses = verified_queue;
-
-    files_write_address(step_one->assembler, step_one->address_index++, operation_word.raw);
-    append_image_lines(step_one);
-
     return OK;
 }
 
 void append_data_image(StepOne *step_one)
 {
     Address *temp;
-    step_one->assembler->ic = step_one->address_index - DATA_SIZE;
-    step_one->assembler->dc = step_one->data_image->counter;
-
     while((temp = dequeue(step_one->data_image)))
     {
-        files_write_address(step_one->assembler, step_one->address_index++, temp->value);
+        files_write_address(step_one->assembler, DATA_SIZE + temp->index + step_one->assembler->ic, temp->value);
     }
-}
-
-/*get operand word is a sub routine of append operation to handle operands convertion and classification
-    Params:
-        -operand: pointer to an Address struct contains an operand
-    return: word struct cosistent with the operand.... */
-Word get_operand_word(Address *operand)
-{
-    word_converter w;
-    w.operand_word.value = operand->value;
-    switch (operand->type)
-    {
-        case REGISTER:
-        case INSTANT:
-        default:
-            w.operand_word.are = A_ARE;
-            break;
-    }
-    w.operand_word.value = operand->value;
-
-    return w.raw;
 }

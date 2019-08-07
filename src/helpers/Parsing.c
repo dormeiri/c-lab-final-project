@@ -120,7 +120,7 @@ ErrorCode map_statement(StepOne *step_one)
         IGNORE_WHITE_SPACES(statement_line);
     }
 
-    if(!(statement->args = malloc(sizeof(char) * strlen(statement_line))))
+    if(!(statement->args = malloc(sizeof(char) * (strlen(statement_line) + 1))))
     {
         exit(EXIT_FAILURE);
     }
@@ -130,7 +130,7 @@ ErrorCode map_statement(StepOne *step_one)
 
     if(tag != NULL)
     {
-        if(!(statement->tag = malloc(sizeof(char) * strlen(tag))))
+        if(!(statement->tag = malloc(sizeof(char) * (strlen(tag) + 1))))
         {
             exit(EXIT_FAILURE);
         }
@@ -284,7 +284,7 @@ OperationType parse_operation_type(const char *str)
 
 /* Check if the string starts with 'r' if yes parse number comes after, but of the number starts with 0 then it must be 0,
 for example r01 is not allowed */
-boolean parse_register(const char *token, Word *out)
+Boolean parse_register(const char *token, Word *out)
 {
     char *end_str;
     if((token[0] != REGISTER_CHAR) || ((token[1] == '0') && (token[2])))

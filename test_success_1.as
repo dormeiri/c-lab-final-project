@@ -1,3 +1,7 @@
+;test_success_1
+
+.define          len=4              
+
 .entry  LIST
 .extern W
 .define           sz         =    2  
@@ -12,18 +16,17 @@ LOOP:   jmp     W
         bne     W
 L1:     inc     L3
 .entry  LOOP
-          .extern NOTHING
+STR:    .string         "abcdef"
         bne     LOOP
 END:    stop
 
-.define          len=-4              
 
 ; Some comment
 
          ; Some comment 2
 
-STR:    .string         "abcdef"
        LIST:   .data   6           , -9,len
+
     K:      .data   +22
 
 .extern      L3          

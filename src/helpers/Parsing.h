@@ -75,6 +75,6 @@ ErrorCode get_label_arg(StepOne *step_one, char **out);
 OperationType parse_operation_type(const char *str);
 
 
-boolean parse_register(const char *token, Word *out);
+Boolean parse_register(const char *token, Word *out);
 
 #endif

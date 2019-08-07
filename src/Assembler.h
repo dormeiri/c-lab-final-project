@@ -47,6 +47,7 @@ this assembler works on an imaginairy coputer with the following "hardware" prop
 #include "entities/Symbol.h"
 
 #define NUM_OF_REGISTERS 8 /*registers r0, r1...r7. the char 'r' followed by integer is a reserved word */
+#define DATA_SIZE 100
 
 typedef struct
 {
@@ -54,7 +55,7 @@ typedef struct
     FILE *input_fp;
     FILE *output_fp;                /* Only 1 given file pointer at given time, we don't need to hold ext, ent etc. togeter */
     SymbolTable *symbols_table;
-    boolean succeed;
+    Boolean succeed;
     Word ic;
     Word dc;
 } Assembler;

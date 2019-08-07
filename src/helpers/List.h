@@ -44,6 +44,6 @@ void *list_get_next(List *l);
 *   Params:
 *       - l:        The list to be freed
 */
-void list_free(List *l); /* TODO: Important! this does not free nested allocated memory! we need to do generic free function as a a parameter and free the obejcts there */
+void list_free(List *l);
 
 #endif

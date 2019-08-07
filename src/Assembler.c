@@ -4,11 +4,11 @@
 #include "StepOne.h"
 #include "StepTwo.h"
 
-static boolean run_assembler(const char *filename);
+static Boolean run_assembler(const char *filename);
 static void free_assembler(Assembler *assembler);
 static ErrorCode create_assembler(const char *name, Assembler **out); /* TODO: Make all output by pointer functions out parameter name to "out" */
  /*create assembler builds an assembler entity with the followitg pointers: filename pointer, input file pointer, output file pointer
- and a boolean variable to have a single source flow control.*/
+ and a Boolean variable to have a single source flow control.*/
 
 int main(int argc, char **argv)
 {
@@ -31,7 +31,7 @@ to make machinecode file/ errors file by source code (<file>.as (assembly langua
         Params: 
             -filename: pointer to the cell in argv where the current file to work on is located
         return: true(1) if both steps ran successfully, false(0) otherwise.*/
-boolean run_assembler(const char *filename)
+Boolean run_assembler(const char *filename)
 {
     /* TODO: Remove old .ext, .entm .ob files, create function in files.h for that */
 
@@ -95,6 +95,8 @@ ErrorCode create_assembler(const char *name, Assembler **out)
 
     TRY_THROW(files_get_input(*out, &(*out)->input_fp));
     TRY_THROW(files_get_output(*out, TEMP_OBJECT_FILE, &(*out)->output_fp));
+    (*out)->ic = 0;
+    (*out)->dc = 0;
 
     return OK;
 }

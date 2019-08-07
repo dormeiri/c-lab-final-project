@@ -39,7 +39,10 @@ ErrorCode files_get_input(Assembler *assembler, FILE **out)
 {
     char *filename = get_filename(assembler->name, INPUT_EXT);
     TRY_THROW(get_input_file(filename, out));
+
     free(filename);
+    filename = NULL;
+    
     return OK;
 }
 
@@ -74,7 +77,10 @@ ErrorCode files_get_output(Assembler *assembler, OutputFileType type, FILE **out
     }
 
     TRY_THROW(get_output_file(filename, out));
+
     free(filename);
+    filename = NULL;
+
     return OK;
 }
 ErrorCode files_read_line(Assembler *assembler, char **out)
@@ -195,7 +201,7 @@ char *convert_to_base4(Word value)
 
     /* TODO: Improve, could be done without reversing */
 
-    result = (char *)malloc(sizeof(Word) * sizeof(char));
+    result = (char *)malloc((sizeof(Word) + 1) * sizeof(char));
     for(mask = 3, i = 0; (mask << ((sizeof(Word) * 8) - WORD_SIZE)) != 0; mask <<= 2, i++)
     {
         switch ((value & mask) >> (i * 2))

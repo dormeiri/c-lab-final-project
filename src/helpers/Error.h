@@ -132,7 +132,10 @@ typedef enum ErrorCode
     /** Warnings **/
 
     /* Symbol declared but never used */
-    UNUSED_SYMBOL = 100
+    UNUSED_SYMBOL = 100,
+
+    /* Entry or extern statement has tag */
+    ENT_EXT_TAG = 101
 } ErrorCode;
 
 /*

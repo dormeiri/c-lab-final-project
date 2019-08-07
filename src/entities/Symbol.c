@@ -33,8 +33,12 @@ void free_symbols_table(SymbolTable *tab)
             while((temp = (*tab)[i]))
             {
                 (*tab)[i] = (*tab)[i]->next;
+
                 free(temp->value);
+                temp->value = NULL;
+
                 free(temp);
+                temp = NULL;
             }
             free(((*tab)[i]));
             (*tab)[i] = NULL;
@@ -86,9 +90,8 @@ ErrorCode add_entry_declaration(SymbolTable *tab, const char *symbol_name)
     return OK;
 }
 
-ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, SymbolProperty prop, Word value, int declaration_index)
+ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, SymbolProperty prop, Word value)
 {
-    word_converter w;
     SymbolList *sptr;
 
     if((sptr = lookup(tab, symbol_name)))
@@ -106,22 +109,17 @@ ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, Symb
     switch (prop)
     {
         case EXTERN_SYM:
-            w.operand_word.are = E_ARE;
-            w.operand_word.value = 0;
+            sptr->value->value = word_push_are(0, E_ARE);
             break;
 
         case MACRO_SYM:
-            w.raw = value;
+            sptr->value->value = value;
             break;
 
         default:
-            w.operand_word.are = R_ARE;
-            w.operand_word.value = value;
+            sptr->value->value = word_push_are(value, R_ARE);
             break;
     }
-    
-    sptr->value->declaration_index = declaration_index;
-    sptr->value->value = w.raw;
 
     return OK;
 }
@@ -260,6 +258,7 @@ void symbol_free(Symbol *s)
     if((s->symbol_name))
     {        
         free(s->symbol_name);
+        s->symbol_name= NULL;
     }
     if((s->usages))
     {
@@ -275,6 +274,7 @@ void symbol_usages_list_free(List *l)
         if(temp->line_str)
         {
             free(temp->line_str);
+            temp->line_str = NULL;
         }
     }
     list_free(l);

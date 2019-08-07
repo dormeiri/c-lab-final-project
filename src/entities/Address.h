@@ -3,27 +3,27 @@
 
 #include "Word.h"
 
-/* The addresses types of the assembler, the values of the enums are the binary value when building operation word */
 typedef enum
 {
-    INSTANT = 0,    /* Yashir */
-    DIRECT = 1,     /* Miadi */
-    ARRAY = 2,  
-    REGISTER = 3,
-    DATA = -1
-} AddressingType;
+    OP_SRC,
+    OP_DEST
+} OperandDirection;
 
 typedef struct
 {
     AddressingType type;
     Word value;
     char *symbol_name; /* Used for step 1 where value not found in symbol table */
+    Word index;
 } Address;
 
 Address *address_new();
 
-Word get_operand_word(Address *operand);
+Word get_operand_word(Address *operand, OperandDirection op_dir);
+
+char operation_num_of_operands(OperationType op_type);
 
 void address_free(Address *a);
+
 
 #endif

@@ -7,7 +7,6 @@
 
 typedef struct
 {
-    long address_index;
     int line_counter;
     char *curr_line;            /* line to manipulate during parsing */
     char *curr_line_copy;       /* line to print if any error occured */

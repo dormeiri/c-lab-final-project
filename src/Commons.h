@@ -2,14 +2,14 @@
 #define COMMONS_HEADER
 
 /* Boolean value */
-typedef enum boolean
+typedef enum Boolean
 {
-    /* False boolean value */
+    /* False Boolean value */
     FALSE = 0,
 
-    /* True boolean value */
+    /* True Boolean value */
     TRUE = 1
-} boolean;
+} Boolean;
 
 /* DELIM_CHAR as a string */
 #define DELIM ","

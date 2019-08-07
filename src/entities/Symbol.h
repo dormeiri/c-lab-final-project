@@ -28,7 +28,6 @@ typedef struct
 typedef struct 
 {
     /* TODO: add declaration address index */
-    int declaration_index;
     char *symbol_name;
     struct
     {
@@ -56,7 +55,7 @@ Symbol *next_symbol(SymbolTable *tab);
 
 ErrorCode add_entry_declaration(SymbolTable *tab, const char *symbol_name);
 
-ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, SymbolProperty prop, Word value, int declaration_index);
+ErrorCode add_symbol_declaration(SymbolTable *tab, const char *symbol_name, SymbolProperty prop, Word value);
 
 /* TODO: Make it use struct */
 ErrorCode add_symbol_usage(SymbolTable *tab, const char *symbol_name, long pos, long line_num, const char *line_str, int address_index);
