@@ -3,6 +3,7 @@
 #include "entities/Symbol.h"
 #include "helpers/Files.h"
 #include "helpers/Parsing.h"
+#include "helpers/Validations.h"
 
 #define TRY_THROW_S1(FUNC, INFO) {\
     ErrorCode RES;\
@@ -110,16 +111,17 @@ Boolean step_one_line_algo(StepOne *step_one)
 
     if(step_one->curr_statement->tag)
     {
+        TRY_THROW_S1(is_valid_tag(step_one->curr_statement->tag), step_one->curr_statement->tag);
         if(step_one->curr_statement->statement_type == EXTERN_KEY || step_one->curr_statement->statement_type == ENTRY_KEY)
         {
-            create_step_one_error(step_one, ENT_EXT_TAG, NULL);
+            create_step_one_error(step_one, ENT_EXT_TAG, step_one->curr_statement->tag);
         }
         else
         {
             SymbolProperty prop = statement_get_symbol_property(step_one->curr_statement);
             temp_str = step_one->curr_statement->tag;
             temp_value = (step_one->curr_statement->statement_type == OPERATION_KEY) ? step_one->assembler->ic : step_one->assembler->dc;
-            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, prop, temp_value), NULL);
+            TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, prop, temp_value), temp_str);
         }
     }
 

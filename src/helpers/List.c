@@ -51,14 +51,12 @@ void *list_get_next(List *l)
     {
         return NULL;
     }
-
     if(l != l_prev)
     {
         l_prev = l;
-        n_prev = l_prev->head;
+        n_prev = l->head;
     }
-
-    if(n_prev)
+    if((n_prev))
     {
         result = n_prev->data;
         n_prev = n_prev->next;

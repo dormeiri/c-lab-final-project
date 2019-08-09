@@ -106,7 +106,34 @@ ErrorCode get_next_address(Queue *addresses, OperationType op_type, OperandDirec
 
 Boolean validate_operand(AddressingType ad_type, OperationType op_type, OperandDirection op_dir)
 {
-    /* TODO: COMPLETE */
-    return OK;
+    switch (op_type)
+    {
+        case MOV_OP:
+        case ADD_OP:
+        case SUB_OP:
+        case NOT_OP:
+        case CLR_OP:
+        case DEC_OP:
+        case RED_OP:
+            return !(op_dir == OP_DEST && ad_type == INSTANT);
+
+        case LEA_OP:
+            if(op_dir == OP_DEST)
+            {
+                return ad_type != INSTANT;
+            }
+            else
+            {
+                return ad_type == DIRECT || ad_type == ARRAY;
+            }
+            
+        case JMP_OP:
+        case BNE_OP:
+        case JSR_OP:
+            return ad_type == DIRECT || ad_type == ARRAY;
+            
+        default:
+            return TRUE;
+    }
 }
 

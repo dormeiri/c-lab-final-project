@@ -9,7 +9,7 @@ R14:   jmp     W
         sub     r1, r3
         cmp     K, #sz
         bne     W
-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:     inc     L3
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:     inc     L3
 .entry  LOOP
         bne     LOOP
 END:    stop

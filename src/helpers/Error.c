@@ -89,16 +89,16 @@ void error_write(Error *e, FILE *first_stream, ...)
     for(stream = first_stream; stream; stream = va_arg(ap, FILE *))
     {
         /* Print error message */
-        fprintf(stream, "%s:%d: %s: %s (error code: %d)", e->asm_name, e->line_num, type, error_msg(e->code), e->code);
+        fprintf(stream, "%s:%d: \n\t%s: %s (error code: %d)", e->asm_name, e->line_num, type, error_msg(e->code), e->code);
 
         /* If any addition info exists, print it */
         if(e->info)
         {
-            fprintf(stream, ", %s", e->info);
+            fprintf(stream, "\n\tadditional information: \"%s\"", e->info);
         }
 
         /* Print the line which created the error */
-        fprintf(stream, "\n\tline: %s\n\n", e->line_str);
+        fprintf(stream, "\n\tline: \"%s\"\n\n", e->line_str);
     }
     va_end(ap);
 }
@@ -116,7 +116,7 @@ const char *error_msg(ErrorCode code)
         case ILLEGAL_COMMA: return "Illegal comma";
         case MISSING_COMMA: return "Missing comma";
         case CONSECUTIVE_COMMA: return "Consecutive commas";
-        case INVALID_TAG: return "Invalid character on declaring symbol";
+        case INVALID_TAG: return "Invalid tag name";
         case EMPTY_VAL: return "Empty value";
         case ARGS_EXPECTED: return "Arguments expected";
         case BUF_LEN_EXCEEDED: return "Line exceeded max length";
@@ -137,6 +137,7 @@ const char *error_msg(ErrorCode code)
         case UNUSED_SYMBOL: return "Symbol declared but never used";
         case OUT_OF_RANGE_REGISTER: return "Unknown register";
         case DATA_OVERFLOW: return "Data overflow";
+        case ENT_EXT_TAG: return "Invalid tag and reference declaration combination";
         default: return NULL;
     }
 }

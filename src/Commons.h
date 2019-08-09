@@ -31,9 +31,6 @@ typedef enum Boolean
 /* The max length of a string, the next 4 characters after the end of the line buffer are used for validations */
 #define MAX_STRING_LEN (LINE_BUFFER_LEN + 4)
 
-/* The max size of a token after cleaning whitespaces */
-#define MAX_TOKEN_LEN 14
-
 /* Its size is the size of MAX_STRING_LEN */
 typedef unsigned char str_len_t;
 

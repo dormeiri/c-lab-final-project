@@ -25,6 +25,12 @@ typedef enum {
     TEMP_OBJECT_FILE
 } OutputFileType;
 
+/*
+*   Description:    Remove old .ob, .ent, .ext files
+*   Params:
+*       - as:       Assebler struct which contains name
+*/
+void files_remove_old_files(Assembler *as);
 
 /*
 *   Description:    Get input file stream by the name of the assembler

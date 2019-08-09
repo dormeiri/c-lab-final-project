@@ -17,15 +17,12 @@ static void append_entries(Assembler *assembler, Queue *entries)
 {
     FILE *fp;
     Symbol *curr_sym;
-
-    if(assembler->succeed)
+    
+    files_get_output(assembler, ENTRY_FILE, &fp);
+    while((curr_sym = (Symbol *)dequeue(entries)))
     {
-        files_get_output(assembler, ENTRY_FILE, &fp);
-        while((curr_sym = (Symbol *)dequeue(entries)))
-        {
-            fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, word_get_value(curr_sym->value));
-            symbol_free(curr_sym);
-        }
+        fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, word_get_value(curr_sym->value));
+        symbol_free(curr_sym);
     }
     fclose(fp);
 }
@@ -37,23 +34,26 @@ static void append_entries(Assembler *assembler, Queue *entries)
            */
 static void append_externals(Assembler *assembler, Queue *externals)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     Symbol *curr_sym;
     SymbolUsage *sym_usage;
 
-    if(assembler->succeed)
+    while((curr_sym = (Symbol *)dequeue(externals)))
     {
-        files_get_output(assembler, EXTERN_FILE, &fp);
-        while((curr_sym = (Symbol *)dequeue(externals)))
+        while((sym_usage = (SymbolUsage *)list_get_next(curr_sym->usages)))
         {
-            while((sym_usage = (SymbolUsage *)list_get_next(curr_sym->usages)))
+            if(!(fp))
             {
-                fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, sym_usage->address_index);
+                files_get_output(assembler, EXTERN_FILE, &fp);
             }
-            symbol_free(curr_sym);
+            fprintf(fp, "%s\t%04d\n", curr_sym->symbol_name, sym_usage->address_index);
         }
+        symbol_free(curr_sym);
     }
-    fclose(fp);
+    if(fp)
+    {
+        fclose(fp);
+    }
 }
 
 static void update_addresses(Assembler *assembler, Symbol *sym)
@@ -125,11 +125,13 @@ void step_two_run(Assembler *assembler)
         {
             append_entries(assembler, entries);
             symbol_queue_free(entries);
+            free(entries);
         }
         if(!IS_EMPTY_QUEUE(externals))
         {
             append_externals(assembler, externals);
             symbol_queue_free(externals);
+            free(externals);
         }
     }
 }

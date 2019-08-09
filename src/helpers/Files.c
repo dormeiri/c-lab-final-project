@@ -16,6 +16,19 @@ static char *convert_to_base4(Word value);
 /*    Public    */
 /****************/
 
+void files_remove_old_files(Assembler *as)
+{
+    char *filename;
+    remove(filename = get_filename(as->name, OBJECT_EXT));
+    if((filename)) free(filename);
+
+    remove(filename = get_filename(as->name, ENTRY_EXT));
+    if((filename)) free(filename);
+
+    remove(filename = get_filename(as->name, EXTERN_EXT));
+    if((filename)) free(filename);
+}
+
 void files_update_symbol_usage(Assembler *assembler, Symbol *symbol, SymbolUsage *sym_usage)
 {
     fseek(assembler->output_fp, sym_usage->file_pos, SEEK_SET);
@@ -102,6 +115,8 @@ void file_copy(FILE *source, FILE *dest)
 {
     char c;
 
+    printf("%ld, %ld\n", source, stdin); /* TODO: Remove*/
+
     rewind(source);
     while((c = fgetc(source)) != EOF)
     {
@@ -136,6 +151,7 @@ ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
         buffer[i] = '\0';
     }
 
+    printf("%ld, %ld\n", fp, stdin); /* TODO: Remove*/
     if(!fgets(buffer, LINE_BUFFER_LEN, fp))
     {
         return EOF_OCCURED;
@@ -148,6 +164,7 @@ ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
     }
     else if(line_len == LINE_BUFFER_LEN - 1 && feof(fp) == FALSE)
     {
+        while(getchar() != '\n');
         return BUF_LEN_EXCEEDED;
     }
     strcpy(*line_ref, buffer);

@@ -60,7 +60,6 @@ char operation_operands(OperationType op_type)
     }
 }
 
-#include <stdio.h>
 void statement_free(Statement *s)
 {
     if((s->image_line))

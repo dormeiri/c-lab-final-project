@@ -12,14 +12,18 @@ static ErrorCode create_assembler(const char *name, Assembler **out); /* TODO: M
 
 int main(int argc, char **argv)
 {
+/*freopen("null","r", stdin);*/
+
     if(argc == 1)
     {
         error_print(INVALID_CL, -1, "", "", "Expected at least one argument");
     }
     else
     {
-        while(*(++argv) && run_assembler(*argv));
+        while(--argc > 0 && run_assembler(argv[argc]));
     }
+    puts("Z");
+        fflush(stdout);
     return EXIT_SUCCESS;
 }
 
@@ -33,19 +37,17 @@ to make machinecode file/ errors file by source code (<file>.as (assembly langua
         return: true(1) if both steps ran successfully, false(0) otherwise.*/
 Boolean run_assembler(const char *filename)
 {
-    /* TODO: Remove old .ext, .entm .ob files, create function in files.h for that */
-
-    ErrorCode res;
+    Boolean result;
+    ErrorCode err;
     Assembler *curr_assembler = NULL;
-
-    printf("Started compiling \"%s\"\n", filename);
    
-    if((res = create_assembler(filename, &curr_assembler)) != OK)
+    if((err = create_assembler(filename, &curr_assembler)) != OK)
     {
-        error_print(res, -1, filename, NULL, NULL);
+        error_print(err, -1, "", "", filename);
         return FALSE;
     }
     
+    printf("Started compiling \"%s\"\n", filename);
     puts("Start step one");
     run_step_one(curr_assembler);
     puts("Finish step one");
@@ -59,10 +61,11 @@ Boolean run_assembler(const char *filename)
         step_two_run(curr_assembler);
         puts("Finish step two");
 
-        fclose(curr_assembler->output_fp);
-        curr_assembler->output_fp = NULL;
     }
     
+    fclose(curr_assembler->output_fp);
+    curr_assembler->output_fp = NULL;
+
     if(curr_assembler->succeed)
     {
         printf("\"%s\" compiled succeessfuly\n", filename);
@@ -72,8 +75,9 @@ Boolean run_assembler(const char *filename)
         printf("Error occured while compiling %s\n", filename);
     }
     
+    result = curr_assembler->succeed;
     free_assembler(curr_assembler);
-    return curr_assembler->succeed;
+    return result;
 }
 
 /*create assembler build the antity that run assembler use to manage the input file across steps and holds the
@@ -95,6 +99,8 @@ ErrorCode create_assembler(const char *name, Assembler **out)
 
     TRY_THROW(files_get_input(*out, &(*out)->input_fp));
     TRY_THROW(files_get_output(*out, TEMP_OBJECT_FILE, &(*out)->output_fp));
+    files_remove_old_files(*out);
+
     (*out)->ic = 0;
     (*out)->dc = 0;
 

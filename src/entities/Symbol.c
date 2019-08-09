@@ -159,6 +159,7 @@ Symbol *find_symbol(SymbolTable *tab, const char *symbol_name)
     return sptr ? sptr->value : NULL;
 }
 
+#include <stdio.h>
 Symbol *create_symbol(const char *name, SymbolProperty prop)
 {
     Symbol *result;

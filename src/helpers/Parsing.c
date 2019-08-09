@@ -125,6 +125,7 @@ ErrorCode map_statement(StepOne *step_one)
         exit(EXIT_FAILURE);
     }
     strcpy(statement->args, statement_line);
+    clean_token(&statement->args);
     TRY_THROW(preaction_validations(statement->args));
 
 
@@ -362,8 +363,7 @@ ErrorCode strtok_wrapper(StepOne *step_one, char **token_ref)
     clean_token(token_ref);
 
     /* Not using strlen because we need only the first 16 chars, effiency */
-    for(i = 0; i < MAX_TOKEN_LEN && (*token_ref)[i] != '\0'; i++);
-    TRY_THROW((i == MAX_TOKEN_LEN) ? TOK_LEN_EXCEEDED : OK);
+    for(i = 0; (*token_ref)[i] != '\0'; i++);
     TRY_THROW((IS_EMPTY_STR(*token_ref)) ? (args_str == NULL ? EMPTY_VAL : ARGS_EXPECTED) : OK);
     TRY_THROW(check_cleaned_token(*token_ref));
 
@@ -386,7 +386,7 @@ ErrorCode tok_to_num(StepOne *step_one, char *token, Word *out)
         }
         else
         {
-            return INVALID_ARGUMENT;
+            return sym ? INVALID_ARGUMENT : NOT_DECLARED;
         }
         
     }
