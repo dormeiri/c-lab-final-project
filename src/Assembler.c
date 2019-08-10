@@ -12,7 +12,6 @@ static ErrorCode create_assembler(const char *name, Assembler **out); /* TODO: M
 
 int main(int argc, char **argv)
 {
-/*freopen("null","r", stdin);*/
 
     if(argc == 1)
     {
@@ -22,10 +21,8 @@ int main(int argc, char **argv)
     {
         while(--argc > 0 && run_assembler(argv[argc]));
     }
-    puts("Z");
-    fflush(stdout);
     puts("X");
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 /*run_assembler controlls the flow across all assembler steps. the assembler is two steps oriented.
@@ -52,21 +49,14 @@ Boolean run_assembler(const char *filename)
     puts("Start step one");
     run_step_one(curr_assembler);
     puts("Finish step one");
-
-    fclose(curr_assembler->input_fp);
-    curr_assembler->input_fp = NULL;
     
     if(curr_assembler->succeed)
     {
         puts("Start step two");
         step_two_run(curr_assembler);
         puts("Finish step two");
-
     }
     
-    fclose(curr_assembler->output_fp);
-    curr_assembler->output_fp = NULL;
-
     if(curr_assembler->succeed)
     {
         printf("\"%s\" compiled succeessfuly\n", filename);
@@ -114,6 +104,13 @@ ErrorCode create_assembler(const char *name, Assembler **out)
          */
 void free_assembler(Assembler *assembler)
 {
+    fclose(assembler->input_fp);
+    assembler->input_fp = NULL;
+    
+    fclose(assembler->output_fp);
+    assembler->output_fp = NULL;
+
     free_symbols_table(assembler->symbols_table);
     free(assembler->symbols_table);
+    assembler->symbols_table = NULL;
 }

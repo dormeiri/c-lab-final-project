@@ -44,7 +44,6 @@ void files_frecopy(Assembler *assembler)
     fprintf(fp, "%d %d\n", assembler->ic, assembler->dc);
     file_copy(assembler->output_fp, fp);
     fclose(fp);
-    fclose(assembler->output_fp);
 }
 
 
@@ -115,8 +114,6 @@ void file_copy(FILE *source, FILE *dest)
 {
     char c;
 
-    printf("%ld, %ld\n", source, stdin); /* TODO: Remove*/
-
     rewind(source);
     while((c = fgetc(source)) != EOF)
     {
@@ -140,24 +137,16 @@ ErrorCode get_output_file(char *filename, FILE **fp_ref)
 
 ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
 {
-    static char buffer[MAX_STRING_LEN];
+    char buffer[MAX_STRING_LEN] = { '\0' };
     size_t line_len;
-    int i = 0;
 
-    /* Delete the last string completly to prevent parsing issues */
-    /* TODO: Maybe try to do without this and see what happens */
-    for(; i < MAX_STRING_LEN; i++)
-    {
-        buffer[i] = '\0';
-    }
-
-    printf("%ld, %ld\n", fp, stdin); /* TODO: Remove*/
     if(!fgets(buffer, LINE_BUFFER_LEN, fp))
     {
         return EOF_OCCURED;
     }
 
     line_len = strlen(buffer);
+
     if(buffer[line_len - 1] == '\n')
     {
         buffer[line_len - 1] = '\0';
@@ -167,6 +156,7 @@ ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
         while(getchar() != '\n');
         return BUF_LEN_EXCEEDED;
     }
+
     strcpy(*line_ref, buffer);
     return OK;
 }
