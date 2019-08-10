@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     puts("Z");
     fflush(stdout);
     puts("X");
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 /*run_assembler controlls the flow across all assembler steps. the assembler is two steps oriented.
