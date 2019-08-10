@@ -23,7 +23,8 @@ int main(int argc, char **argv)
         while(--argc > 0 && run_assembler(argv[argc]));
     }
     puts("Z");
-        fflush(stdout);
+    fflush(stdout);
+    puts("X");
     return EXIT_SUCCESS;
 }
 
