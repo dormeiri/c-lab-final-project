@@ -36,12 +36,20 @@ static void append_data_image(StepOne *step_one);
 (assembler holds the success key to indicate how to behave after this step ends.) */
 void run_step_one(Assembler *assembler)
 {
+    ErrorCode err;
     StepOne *step_one;
     step_one = step_one_new(assembler);
 
-    while(files_read_line(assembler, &step_one->curr_line) == OK)
+    while((err = files_read_line(assembler, &step_one->curr_line)) != EOF_OCCURED)
     {
-        if(!step_one_line_algo(step_one))
+        strcpy(step_one->curr_line_copy, step_one->curr_line);
+        if(err != OK)
+        {
+            create_step_one_error(step_one, err, NULL);
+            assembler->succeed = FALSE;
+            break; /* Unable to read line produce fatal error */
+        }
+        else if(!step_one_line_algo(step_one))
         {
             assembler->succeed = FALSE;
         }
@@ -88,7 +96,7 @@ StepOne *step_one_new(Assembler *assembler)
 
 void create_step_one_error(StepOne *step_one, ErrorCode ErrorCode, const char *info)
 {
-    error_print(ErrorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy, info);
+    error_print(ErrorCode, step_one->line_counter, step_one->assembler->name, step_one->curr_line_copy, info);                       
 }
 
 /*step one line algo handles the logics of handling a single line, since the connection between lines is established 
@@ -103,8 +111,6 @@ Boolean step_one_line_algo(StepOne *step_one)
     char *temp_str;
     ErrorCode res;
     Word temp_value;
-
-    strcpy(step_one->curr_line_copy, step_one->curr_line);
 
     step_one->curr_statement = statement_new();
     TRY_THROW_S1(map_statement(step_one), NULL);
@@ -135,11 +141,13 @@ Boolean step_one_line_algo(StepOne *step_one)
 
         case EXTERN_KEY:
             get_label_arg(step_one, &temp_str);
+            TRY_THROW_S1(is_valid_tag(temp_str), temp_str);
             TRY_THROW_S1(add_symbol_declaration(step_one->assembler->symbols_table, temp_str, EXTERN_SYM, 0), NULL);
             break;
 
         case ENTRY_KEY:
             get_label_arg(step_one, &temp_str);
+            TRY_THROW_S1(is_valid_tag(temp_str), temp_str);
             TRY_THROW_S1(add_entry_declaration(step_one->assembler->symbols_table, temp_str), NULL);
             break;
 
@@ -177,16 +185,7 @@ void step_one_free_runtime_objs(StepOne *step_one)
 
 void step_one_free(StepOne *step_one)
 {
-    if(step_one->curr_line)
-    {
-        free(step_one->curr_line);
-        step_one->curr_line = NULL;
-    }
-    if(step_one->curr_line_copy)
-    {
-        free(step_one->curr_line_copy);
-        step_one->curr_line_copy = NULL;
-    }
+    step_one_free_runtime_objs(step_one);
     queue_free(step_one->data_image);
     free(step_one->data_image);
     step_one->data_image = NULL;

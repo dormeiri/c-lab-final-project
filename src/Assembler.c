@@ -12,16 +12,14 @@ static ErrorCode create_assembler(const char *name, Assembler **out); /* TODO: M
 
 int main(int argc, char **argv)
 {
-
     if(argc == 1)
     {
         error_print(INVALID_CL, -1, "", "", "Expected at least one argument");
     }
     else
     {
-        while(--argc > 0 && run_assembler(argv[argc]));
+        while(*(++argv) && run_assembler(*argv));
     }
-    puts("X");
     return EXIT_SUCCESS;
 }
 
@@ -104,12 +102,12 @@ ErrorCode create_assembler(const char *name, Assembler **out)
          */
 void free_assembler(Assembler *assembler)
 {
-    fclose(assembler->input_fp);
-    assembler->input_fp = NULL;
-    
     fclose(assembler->output_fp);
     assembler->output_fp = NULL;
 
+    fclose(assembler->input_fp);
+    assembler->input_fp = NULL;
+    
     free_symbols_table(assembler->symbols_table);
     free(assembler->symbols_table);
     assembler->symbols_table = NULL;

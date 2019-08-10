@@ -20,8 +20,8 @@ static void error_log_filename(char *dest, size_t dest_size);
 static void error_write(Error *e, FILE *first_stream, ...);
 static const char *error_msg(ErrorCode code);
 
-/* Creates new error struct and prints it to errors files streams. */
-void error_print(ErrorCode code, int line_num, const char *asm_name, const char *line_str, const char *info)
+/* DEPRECATED DUE TO */
+void error_print_old(ErrorCode code, int line_num, const char *asm_name, const char *line_str, const char *info)
 {
     static char log_filename[MAX_STRING_LEN] = {'\0'}; /* Store the error log file name */
     FILE *error_log; /* Error log file stream pointer */
@@ -40,16 +40,27 @@ void error_print(ErrorCode code, int line_num, const char *asm_name, const char 
     }
 
     /* Open log file and print error to that file */
-
     if(!(error_log = fopen(log_filename, "a")))
     {
         exit(EXIT_FAILURE);
     }
     error_write(&e, stderr, error_log, NULL);
-
     fclose(error_log);
 }
 
+/* Creates new error struct and prints it to errors files streams. */
+void error_print(ErrorCode code, int line_num, const char *asm_name, const char *line_str, const char *info)
+{
+    Error e; /* Error struct that contains error information */
+
+    e.code = code;
+    e.line_num = line_num;
+    e.asm_name = asm_name;
+    e.line_str = line_str;
+    e.info = info;
+
+    error_write(&e, stderr, NULL);
+}
 
 /* Generate error log file by the current date and time */
 void error_log_filename(char *dest, size_t dest_size)
@@ -76,7 +87,11 @@ void error_write(Error *e, FILE *first_stream, ...)
     va_start(ap, first_stream);
 
     /* Find if the ErrorCode is warning or error */
-    if(IS_WRN(e->code))
+    if(e->code == BUF_LEN_EXCEEDED)
+    {
+        type = "fatal error";
+    }
+    else if(IS_WRN(e->code))
     {
         type = "warning";
     }
@@ -98,7 +113,12 @@ void error_write(Error *e, FILE *first_stream, ...)
         }
 
         /* Print the line which created the error */
-        fprintf(stream, "\n\tline: \"%s\"\n\n", e->line_str);
+        if(e->code != BUF_LEN_EXCEEDED)
+        {
+            fprintf(stream, "\n\tline: \"%s\"", e->line_str);
+        }
+        fprintf(stream, "\n\n");
+        
     }
     va_end(ap);
 }

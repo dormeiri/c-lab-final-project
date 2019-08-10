@@ -234,14 +234,14 @@ ErrorCode get_string_arg(StepOne *step_one, char **str_ref)
     *str_ref = args_str;
 
     /* Skip charcter until end of string */
-    for(;(*args_str != QUOTE_CHAR) && (IS_EMPTY_STR(args_str) == FALSE); args_str++);
+    for(;(*args_str != QUOTE_CHAR) && (!IS_EMPTY_STR(args_str)); args_str++);
 
     /* Check if the string ends with valid char */
     TRY_THROW((*args_str != QUOTE_CHAR) ? INVALID_STRING : OK); 
     SPLIT_STR(args_str);
 
     /* Check if there is extraneous charcter after end of string */
-    TRY_THROW((IS_EMPTY_STR(args_str) == FALSE) ? INVALID_STRING : OK);
+    TRY_THROW((!IS_EMPTY_STR(args_str)) ? INVALID_STRING : OK);
 
     return OK;
 }
@@ -288,7 +288,9 @@ for example r01 is not allowed */
 Boolean parse_register(const char *token, Word *out)
 {
     char *end_str;
-    if((token[0] != REGISTER_CHAR) || ((token[1] == '0') && (token[2])))
+    if((token[0] != REGISTER_CHAR) 
+        || ((token[1] == '0') && (token[2]))
+        || (!isdigit(token[1])))
     {
         return FALSE;
     }

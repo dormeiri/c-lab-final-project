@@ -54,15 +54,15 @@ ErrorCode check_token_consecutive(const char *token)
 ErrorCode is_valid_tag(const char *token)
 {
     Word temp;
-    char i = 1;
+    char i;
 
     if((parse_register(token, &temp)) || parse_operation_type(token) != NONE_OP)
     {
         return INVALID_TAG;
     }
 
-    TRY_THROW(isalpha(*token) ? OK : INVALID_TAG);
+    TRY_THROW(isalpha(*token++) ? OK : INVALID_TAG);
 
-    for(token++; i >= MAX_TAG_LEN || isalnum(*token); token++, i++);
-    return *token ? INVALID_TAG : OK;
+    for(i = 1; i <= MAX_TAG_LEN && isalnum(*token); token++, i++);
+    return (i > MAX_TAG_LEN || *token) ? INVALID_TAG : OK;
 }

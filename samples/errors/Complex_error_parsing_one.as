@@ -1,4 +1,3 @@
-DAT:   .data 9,     +17 		,24,		-3,	-6,                       -5563,                          0003        , 54       , 64 
 STRING: .string      		"abcde  f   g    h" ;comment
 
 RE493: inc FF
@@ -55,11 +54,11 @@ cmp 		r1,r2
 lea DAT  ,      r1
 veRyW31rdW0RD987: .string "just a mumble jumble of l e t t e r s"
 
-;errors:	line too long (line ),
-;			string invalid comment after EOL (line )
-;			wrong operation name, movv instead of mov (line )
-;			missing ',' in "ANOtherDAT:..." Line (line )
-;			wrong operation name, comp instead of cmp (line )
-;			Invalid label declaration CMpLabel no ':' (line )
-;			Extraneous text after command (in FF: .data line )
-;			ANOtherDAT declared twice (line )
+;errors:	
+;			string invalid comment after EOL (line 1)
+;			wrong operation name, movv instead of mov (line 8)
+;			missing ',' in "ANOtherDAT:..." Line (line 23)
+;			wrong operation instead of label due to missing ':' (line 26)
+;			wrong operation name, comp instead of cmp (line 27)
+;			Extraneous text after command (in FF: .data line 37)
+;			ANOtherDAT declared twice (line 43)

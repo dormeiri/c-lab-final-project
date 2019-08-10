@@ -17,8 +17,20 @@ this assembler works on an imaginairy coputer with the following "hardware" prop
         -running examples included.
         -assembler.c module includes the main function and its the controller of the assembly .
         -assembler.h wraps both step one and step two and is the main header file.
-        -registers names are r0, r1,...r7.
-        -r<integer> is invalid label name (e.g. r8 is defined as reserved word.)
+        - Comment is in seperated line, comment EOL is undefined (Throw error according to context)
+        - Instructions names begin with '.' and followed by lower case letters
+        - The compiler is case sensative
+        - Parsing:
+            - Step one:
+                - declaring macro using another macro is acceptable due to conflict in the booklet, 
+                    For example, the following is acceptable:
+                        .define x = 1
+                        .define y = x
+        - Registers:
+            - r0,...,r7 valid registers. 
+            - r+x/r-x/r0x (where x is integer) not register.
+            - r8,r9,r10,... invalid syntax (invalid register, label, macro, etc.)
+            - examples: r01/r+1/r-1 is not register, r19 is invalid, r1 is register
         -instruction 
             -structure: <optional label> <.data> <one or more parameters> up to 80 characters
             -doesn't contain the A,R,E field.
@@ -28,6 +40,10 @@ this assembler works on an imaginairy coputer with the following "hardware" prop
             -the ".data" parameters are all signed integers minus ('-') sign is must to represent negative numbers plus ('+') sign is optional
             (meaning '+17' and '17' represent the same number).
             -instructions doesn't create machine operation word
+        - files:
+            -Filename appears twice is compiling twice, the second compilition overriding the first
+            -if line exceeds the 80 chars, fatal error is thrown due to inability to put upper bound on line length
+           -Empty file (no code lines, comments allowed), produce empty object file (0 0 header)
         -operations:
             -operation statement is constructed from at leats one word, and up to five words.
             -the first word structure is always identical

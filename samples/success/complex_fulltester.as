@@ -10,15 +10,13 @@ RE493: inc FF
 
 DO:   mov DAT[zero], DAT[number0n3]
 
-SHOULDWARN:          .entry            HELLO
+          .entry            HELLO
 HELLO:   add	 #1	,	 r1
-SHOUldWArn2:		.extern                         GOODBYE
 ;please ignore this line
 
 ;as well as FROM THIS ONE
 
 .define nUm12321 = 7
-
 
 LIST: .data 6,zero, number0n3
 .define NuMbER        =            -16

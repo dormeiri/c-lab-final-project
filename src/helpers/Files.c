@@ -5,10 +5,7 @@
 
 static void file_copy(FILE *source, FILE *dest);
 static char *get_filename(const char *name, const char *extention);
-static ErrorCode get_input_file(char *filename, FILE **fp_ref);
-static ErrorCode get_output_file(char *filename, FILE **fp_ref);
 static ErrorCode fgets_wrapper(FILE *fp, char **line_ref);
-static ErrorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref);
 static ErrorCode get_file(char *filename, char *mode, FILE **fp_ref);
 static char *convert_to_base4(Word value);
 
@@ -49,18 +46,23 @@ void files_frecopy(Assembler *assembler)
 
 ErrorCode files_get_input(Assembler *assembler, FILE **out)
 {
+    ErrorCode err;
+
     char *filename = get_filename(assembler->name, INPUT_EXT);
-    TRY_THROW(get_input_file(filename, out));
+
+    err = get_file(filename, "r", out);
 
     free(filename);
     filename = NULL;
     
-    return OK;
+    return err;
 }
 
 ErrorCode files_get_output(Assembler *assembler, OutputFileType type, FILE **out)
 {
+    ErrorCode err;
     char *filename;
+
     switch (type)
     {
         case ENTRY_FILE:
@@ -88,18 +90,17 @@ ErrorCode files_get_output(Assembler *assembler, OutputFileType type, FILE **out
             break;
     }
 
-    TRY_THROW(get_output_file(filename, out));
+    err = get_file(filename, "w", out);
 
     free(filename);
     filename = NULL;
 
-    return OK;
+    return err;
 }
 ErrorCode files_read_line(Assembler *assembler, char **out)
 {
     return fgets_wrapper(assembler->input_fp, out);
 }
-
 
 void files_write_address(Assembler *as, int address_index, Word value)
 {
@@ -121,20 +122,6 @@ void file_copy(FILE *source, FILE *dest)
     }
 }
 
-/* Do get_file with 'r' mode */
-ErrorCode get_input_file(char *filename, FILE **fp_ref)
-{
-    TRY_THROW(get_file(filename, "r+", fp_ref));
-    return OK;
-}
-
-/* Do get_file with 'w' mode */
-ErrorCode get_output_file(char *filename, FILE **fp_ref)
-{
-    TRY_THROW(get_file(filename, "w", fp_ref));
-    return OK;
-}
-
 ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
 {
     char buffer[MAX_STRING_LEN] = { '\0' };
@@ -153,36 +140,17 @@ ErrorCode fgets_wrapper(FILE *fp, char **line_ref)
     }
     else if(line_len == LINE_BUFFER_LEN - 1 && feof(fp) == FALSE)
     {
-        while(getchar() != '\n');
         return BUF_LEN_EXCEEDED;
     }
-
     strcpy(*line_ref, buffer);
+
     return OK;
 }
 
-/* Do get_relative_file_path and fopen_wrapper, save the result in fp_ref, return error on fail */
+/* Save the result in fp_ref, return error on fail */
 ErrorCode get_file(char *filename, char *mode, FILE **fp_ref)
 {
-    FILE *fp;
-
-    TRY_THROW(fopen_wrapper(filename, mode, &fp));
-    
-    *fp_ref = fp;
-    return OK;
-}
-
-/* Validate that fopen didn't returned NULL */
-ErrorCode fopen_wrapper(char *file_path, char *mode, FILE ** fp_ref)
-{
-    *fp_ref = fopen(file_path, mode);
-
-    if(*fp_ref == NULL)
-    {
-        return FILE_ERROR;
-    }
-
-    return OK;
+    return (*fp_ref = fopen(filename, mode)) ? OK : FILE_ERROR;
 }
 
 char *get_filename(const char *name, const char *extention)
